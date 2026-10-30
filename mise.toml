@@ -1,0 +1,29 @@
+[tools]
+gitleaks = "latest"
+prek = "latest"
+ruff = "latest"
+rumdl = "latest"
+shellcheck = { version = "latest", os = ["linux", "macos"] }
+ty = "latest"
+uv = "latest"
+
+[settings]
+experimental = true
+lockfile = true
+
+[hooks]
+enter = "bash ./scripts/enter_project.sh"
+
+[env]
+_.file = ".env"  # for sensitive data
+
+[shell_alias]
+pya = "source ./.venv/bin/activate"
+
+[tasks.docs]
+run = "uvx zensical serve"
+description = "Serve the documentation locally"
+
+[tasks.sync]
+run = "uv sync --upgrade"
+description = "Sync and upgrade packages"
