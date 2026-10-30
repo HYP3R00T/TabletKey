@@ -1,0 +1,40 @@
+:root {
+  --md-primary-fg-color: #176b60;
+  --md-accent-fg-color: #168573;
+}
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #124e48;
+  --md-accent-fg-color: #62d1b7;
+}
+.tk-hero {
+  padding: 1.6rem 0 1rem;
+  max-width: 46rem;
+}
+.tk-eyebrow {
+  color: var(--md-accent-fg-color);
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+}
+.tk-hero h1 {
+  color: var(--md-default-fg-color);
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  font-weight: 750;
+  letter-spacing: -.04em;
+  line-height: 1.12;
+  margin: .6rem 0 1rem;
+}
+.tk-hero p { font-size: 1rem; line-height: 1.7; }
+.md-typeset img[src*="screenshots/"] {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: .65rem;
+  box-shadow: 0 .6rem 2rem #102a2614;
+  display: block;
+  height: auto;
+  margin: 1.4rem auto;
+}
+.md-typeset .grid.cards > ul > li { border-radius: .55rem; }
+@media (max-width: 600px) {
+  .tk-hero { padding-top: .6rem; }
+  .tk-hero .md-button { margin: .25rem 0; }
+}

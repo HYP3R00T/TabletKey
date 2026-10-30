@@ -7,6 +7,7 @@
 | `device.py` | Verify USB identity, initialize interface 2, read hidraw, grab only native VO1060 input |
 | `protocol.py` | Captured button and wheel pulse decoding |
 | `pen.py` | Pen decoding, tablet-area transform, pressure-sensitive uinput pens |
+| `proximity.py`, `detection_widgets.py` | Binary range transitions, packet timing, and hover diagnostics |
 | `pressure.py`, `pressure_widgets.py` | Shared validated pressure response, live history, and curve preview |
 | `displays.py` | COSMIC output geometry and app-owned per-monitor routing entries |
 | `config.py` | Validated settings, atomic writes, version-1 migration |
@@ -14,7 +15,7 @@
 | `daemon.py` | Connection lifecycle, initialization, output ownership, local IPC |
 | `ipc.py` | Private Unix socket with same-user peer checks |
 | `cli.py`, `gui.py` | Typer lifecycle/settings commands and the visual PySide6 editor |
-| `widgets.py`, `ui_preferences.py` | Photo hit areas, area dragging, shortcut picker, learned physical layout, and control names |
+| `widgets.py`, `ui_preferences.py` | Diagram hit areas, area dragging, shortcut picker, learned physical layout, and control names |
 | `setup.py` | Explicit one-time device-scoped udev installation |
 
 There is no OTD library or binary dependency. An optional handoff command can stop the existing
@@ -70,8 +71,8 @@ Display names, physical key order, and learned wheel orientation are UI metadata
 Learning changes the picture/labels without changing which hardware event a binding belongs to.
 Startup ignores buffered historical events when identifying controls; only new presses count.
 
-The official photo is rendered from a bundled resource, with vector overlays for selection, activity,
-pen position, and the draggable tablet rectangle. The app does not contact the image host at runtime.
+The original MIT-licensed tablet schematic is rendered from a bundled SVG resource, with vector overlays for selection, activity,
+pen position, and the draggable tablet rectangle. The app does not fetch artwork at runtime.
 Action presets and Qt shortcut recording both produce validated bindings understood by the existing daemon.
 The save path validates a complete profile before updating the driver; it does not omit pen fields.
 
@@ -91,3 +92,16 @@ The half-second pen timeout adds a zero-pressure sample and clears stale readout
 The sensor-time graph shows stored actual response; editing controls changes only the curve preview
 until Save. Neither graph establishes the physical force-to-sensor relationship without an external
 force reference. Defaults remain linear; sensitivity changes are explicit user choices.
+
+## Pen Detection
+
+The observed exact thirteen-byte `09 41 C0` frame is a range exit. The daemon clears telemetry,
+adds a zero-pressure sample, and releases virtual pen contact/proximity immediately. Valid decoded
+pen reports restore detection. The shared 500 ms silence timeout remains a fallback when no exit
+arrives. Disconnect releases output and marks detection unavailable.
+
+Detection retains 128 transitions and up to 512 recent receipt times in memory. Monotonic timestamps
+support the binary timeline and last-report age; brief exits remain visible in counters between GUI
+polls. The max-gap statistic excludes deliberate out-of-range intervals. These are processing-time
+measurements, not hardware timestamps, distance estimates, or analogue signal measurements.
+No settings migration is needed; pressure responses and all existing options are preserved.

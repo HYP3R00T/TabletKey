@@ -213,7 +213,7 @@ class TabletView(QWidget):
         self.anchor = QPointF()
         self.original_area = self.area
         self.image = QPixmap()
-        self.image.loadFromData(files("tabletkey").joinpath("resources/vo1060.jpg").read_bytes())
+        self.image.loadFromData(files("tabletkey").joinpath("resources/vo1060.svg").read_bytes())
         self.setMinimumSize(360, 240)
         self.setMouseTracking(True)
 

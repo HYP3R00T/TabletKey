@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 
 from tabletkey import daemon, ipc
 from tabletkey.config import Settings, load_settings
+from tabletkey.detection_widgets import DetectionPanel
 from tabletkey.pressure_widgets import PressurePanel
 from tabletkey.protocol import CONTROLS
 from tabletkey.ui_preferences import DEFAULT_KEY_ORDER, UiPreferences
@@ -86,6 +87,8 @@ class Window(QMainWindow):
         self.pressure_panel = PressurePanel()
         self.pressure_panel.changed.connect(self.mark_dirty)
         self.tabs.addTab(self.pressure_panel, "Pressure")
+        self.detection_panel = DetectionPanel()
+        self.tabs.addTab(self.detection_panel, "Pen detection")
         layout.addWidget(self.tabs, 1)
         bottom = QHBoxLayout()
         self.output_enabled = QCheckBox("Enable tablet output")
@@ -456,10 +459,12 @@ class Window(QMainWindow):
         self.tablet.update_live(active, self.last_pen)
         self.area_view.update_live(active, self.last_pen)
         self.pressure_panel.history.update()
+        self.detection_panel.history.update()
         for control, button in self.control_buttons.items():
             button.setStyleSheet("background: #137e70; color: white;" if control in active else "")
 
     def update_status(self, value: dict[str, Any]) -> None:
+        self.detection_panel.update_status(value)
         if not value.get("running"):
             self.status_label.setText("Driver stopped · start it to use the tablet.")
             self.pressed.clear()

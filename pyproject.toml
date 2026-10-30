@@ -1,11 +1,31 @@
 [project]
 name = "tabletkey"
 version = "0.1.0"
-description = "Standalone VEIKK VO1060 driver for COSMIC/Linux"
+description = "Give your VEIKK VO1060 a home on COSMIC Linux: pen, shortcuts, wheel, and visual settings."
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
-dependencies = ["PySide6>=6.8,<7", "evdev>=1.9,<2", "typer>=0.16,<1"]
+license-files = ["LICENSE"]
+authors = [{ name = "Rajesh Das" }]
+keywords = ["cosmic", "linux", "tablet", "veikk", "vo1060", "wayland"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: X11 Applications :: Qt",
+  "Intended Audience :: End Users/Desktop",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Multimedia :: Graphics",
+  "Topic :: System :: Hardware :: Hardware Drivers",
+]
+
+dependencies = ["PySide6-Essentials>=6.8,<7", "evdev>=1.9,<2", "typer>=0.16,<1"]
+
+[project.urls]
+Documentation = "https://hyp3r00t.github.io/TabletKey/"
+Homepage = "https://github.com/HYP3R00T/TabletKey"
+Issues = "https://github.com/HYP3R00T/TabletKey/issues"
+Repository = "https://github.com/HYP3R00T/TabletKey"
 
 [project.scripts]
 tabletkey = "tabletkey.cli:main"
@@ -20,3 +40,6 @@ build-backend = "uv_build"
 [tool.pytest.ini_options]
 addopts = "-ra"
 testpaths = ["tests"]
+
+[tool.uv.build-backend]
+source-include = ["docs/**", "tools/**", "tests/**", "zensical.toml", "AGENTS.md", ".python-version"]

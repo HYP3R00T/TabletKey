@@ -19,9 +19,7 @@ from tabletkey.setup import access_problem, install_rules, rule_text
 
 app = typer.Typer(help="TabletKey: standalone VEIKK VO1060 driver for COSMIC/Linux.", no_args_is_help=False)
 daemon_app = typer.Typer(help="Start, stop, or inspect the background process.", no_args_is_help=True)
-config_app = typer.Typer(
-    help="Edit global mappings. Output is disabled until explicitly enabled.", no_args_is_help=True
-)
+config_app = typer.Typer(help="Edit global shortcuts, scrolling, and output settings.", no_args_is_help=True)
 app.add_typer(daemon_app, name="daemon")
 app.add_typer(config_app, name="config")
 

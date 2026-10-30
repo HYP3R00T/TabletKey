@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1600" viewBox="0 0 1600 1600">
+  <title>TabletKey VO1060 control diagram</title>
+  <desc>Four keys to the right of a dial, with the writing area below. Original schematic, not a product photograph.</desc>
+  <defs>
+    <linearGradient id="body" x2="0" y2="1"><stop stop-color="#303944"/><stop offset="1" stop-color="#19232d"/></linearGradient>
+    <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M80 0H0V80" fill="none" stroke="#3c4b59" stroke-width="1"/></pattern>
+  </defs>
+  <rect x="137" y="400" width="1286" height="808" rx="38" fill="url(#body)" stroke="#485766" stroke-width="3"/>
+  <path d="M160 541H1400" stroke="#465363" stroke-width="2"/>
+  <circle cx="211" cy="474" r="61" fill="#131d26" stroke="#738394" stroke-width="4"/>
+  <circle cx="211" cy="474" r="45" fill="#34424f" stroke="#91a1b0" stroke-width="2"/>
+  <circle cx="211" cy="474" r="24" fill="#19232d"/>
+  <g fill="#19232d" stroke="#677888" stroke-width="2">
+    <rect x="317" y="435" width="76" height="78" rx="10"/>
+    <rect x="397" y="435" width="76" height="78" rx="10"/>
+    <rect x="477" y="435" width="76" height="78" rx="10"/>
+    <rect x="557" y="435" width="129" height="78" rx="10"/>
+  </g>
+  <text x="1370" y="488" text-anchor="end" fill="#a5b8c8" font-family="sans-serif" font-size="25" letter-spacing="4">TABLETKEY / VO1060</text>
+  <rect x="270" y="562" width="1005" height="598" rx="6" fill="#202d38"/>
+  <rect x="270" y="562" width="1005" height="598" rx="6" fill="url(#grid)"/>
+  <g fill="none" stroke="#94a9ba" stroke-width="3">
+    <path d="M270 596V562H304M1241 562H1275V596M1275 1126V1160H1241M304 1160H270V1126"/>
+  </g>
+  <text x="772" y="865" text-anchor="middle" fill="#7c93a5" font-family="sans-serif" font-size="30" letter-spacing="5">YOUR WRITING SPACE</text>
+</svg>

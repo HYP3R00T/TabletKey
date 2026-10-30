@@ -1,15 +1,22 @@
 [project]
 site_name = "TabletKey"
-site_description = "VEIKK VO1060 companion tooling for Linux"
+site_description = "Your tablet. Your shortcuts. Standalone VEIKK VO1060 driver and visual settings for COSMIC Linux."
+site_url = "https://hyp3r00t.github.io/TabletKey/"
+extra_css = ["stylesheets/extra.css"]
 repo_name = "HYP3R00T/TabletKey"
 repo_url = "https://github.com/HYP3R00T/TabletKey"
+edit_uri = "edit/main/docs/"
 site_author = "Rajesh Das"
 copyright = "Copyright &copy; 2026 Rajesh Das"
 
 nav = [
   { Home = "index.md" },
-  { "Hardware Investigation" = "hardware.md" },
+  { "Get Started" = "getting-started.md" },
+  { "User Guide" = "guide.md" },
+  { Troubleshooting = "troubleshooting.md" },
+  { "Hardware Evidence" = "hardware.md" },
   { Architecture = "architecture.md" },
+  { "Maintaining & Releasing" = "releasing.md" },
 ]
 
 [project.theme]
@@ -75,3 +82,7 @@ custom_fences = [
 
 [project.markdown_extensions.pymdownx.tabbed]
 alternate_style = true
+
+[project.markdown_extensions.md_in_html]
+
+[project.markdown_extensions.attr_list]

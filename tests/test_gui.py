@@ -39,7 +39,7 @@ def status(events=(), sequence=0, pressed=()):
     }
 
 
-def test_live_photo_highlights_and_presets(window):
+def test_live_diagram_highlights_and_presets(window):
     window.update_status(status())
     window.update_status(status([{"sequence": 1, "control": "button_04", "pressed": True}], 1, ["button_04"]))
     window.tick()
@@ -128,7 +128,7 @@ def test_dragging_area_corner_updates_saved_coordinates(window):
     assert area[:2] == (0, 0)
 
 
-def test_clicking_photo_selects_physical_control(window):
+def test_clicking_diagram_selects_physical_control(window):
     window.show()
     QApplication.processEvents()
     target = window.tablet.project(TabletView.KEYS["button_02"]).center().toPoint()
@@ -174,7 +174,7 @@ def test_record_button_captures_keyboard_input(window):
     assert picker.binding() == "CTRL+Z"
 
 
-def test_physical_key_order_matches_numbered_photo_without_reassigning_actions(window):
+def test_physical_key_order_matches_numbered_diagram_without_reassigning_actions(window):
     window.update_status(status())
     before = {control: picker.binding() for control, picker in window.bindings.items()}
     for number, control in enumerate(("button_01", "button_02", "button_04", "button_08"), 1):
@@ -240,3 +240,41 @@ def test_pressure_range_warning_is_wired_from_daemon_status(window):
     window.update_status(packet)
     assert window.pressure_panel.range_warning
     assert "12000" in window.pressure_panel.support.text()
+
+
+def test_detection_panel_shows_binary_state_and_brief_losses(window):
+    import time
+
+    packet = status()
+    now = time.monotonic()
+    packet.update(
+        pen={"x": 100, "y": 100, "pressure": 0, "in_range": True},
+        detection={
+            "in_range": True,
+            "last_report_ms": 5,
+            "reports_last_second": 190,
+            "max_gap_ms": 25.5,
+            "range_exits": 2,
+            "timeouts": 0,
+            "reason": "Pen report",
+            "output_in_range": True,
+            "history": [
+                [now - 1, True, "Pen report"],
+                [now - 0.5, False, "Tablet range exit"],
+                [now, True, "Pen report"],
+            ],
+        },
+    )
+    window.update_status(packet)
+    panel = window.detection_panel
+    assert panel.state.text() == "Detected · Hovering"
+    assert "190 reports" in panel.timing.text()
+    assert "2 tablet range exits" in panel.events.text()
+    assert len(panel.history.history) == 3
+    window.tabs.setCurrentWidget(panel)
+    window.show()
+    QApplication.processEvents()
+    assert not panel.grab().isNull()
+    window.update_status({"running": False})
+    assert panel.history.history == []
+    assert "Start or restart" in panel.state.text()

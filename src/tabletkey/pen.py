@@ -8,6 +8,7 @@ from evdev import AbsInfo, UInput, ecodes
 
 from tabletkey.displays import Display, apply_routes
 from tabletkey.pressure import SENSOR_MAX, PressureSettings, map_pressure
+from tabletkey.proximity import PEN_TIMEOUT
 
 MAX_X = 50800
 MAX_Y = 31750
@@ -132,7 +133,7 @@ class PenOutput:
             device.syn()
 
     def expire(self) -> None:
-        if self.active is not None and time.monotonic() - self.last_report > 0.5:
+        if self.active is not None and time.monotonic() - self.last_report > PEN_TIMEOUT:
             self.release()
 
     def close(self) -> None:

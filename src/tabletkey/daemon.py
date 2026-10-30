@@ -25,6 +25,7 @@ from tabletkey.output import Output
 from tabletkey.pen import PenOutput, decode_pen, reported_pressure
 from tabletkey.pressure import SENSOR_MAX, map_pressure
 from tabletkey.protocol import Decoder
+from tabletkey.proximity import PEN_TIMEOUT, Detection, is_range_exit
 from tabletkey.setup import access_problem
 
 LOG = logging.getLogger("tabletkey")
@@ -38,6 +39,7 @@ class Daemon:
         self.output: Output | None = None
         self.pen_output: PenOutput | None = None
         self.pen_reports = 0
+        self.detection = Detection()
         self.pen_state: dict | None = None
         self.pressure_history: deque[list] = deque(maxlen=600)
         self.pressure_sequence = 0
@@ -72,6 +74,10 @@ class Daemon:
             "pen_active": self.pen_output is not None,
             "pen_reports": self.pen_reports,
             "pen": self.pen_state,
+            "detection": {
+                **self.detection.snapshot(),
+                "output_in_range": self.pen_output is not None and self.pen_output.active is not None,
+            },
             "pressure_history": list(self.pressure_history),
             "pressure_telemetry": True,
             "pressure_max_seen": self.pressure_max_seen,
@@ -123,6 +129,7 @@ class Daemon:
         self.grabs.clear()
         self.initialized = False
         self.pen_state = None
+        self.detection.lost(time.monotonic(), "Tablet disconnected")
         self.last_pen_time = 0
         self.add_pressure_sample(0, 0)
         self.decoder.reset()
@@ -151,6 +158,7 @@ class Daemon:
                 self.handles = device.open_standalone_interfaces(interfaces)
                 self.grabs = device.grab_kernel_inputs()
                 self.initialized = True
+                self.detection.reason = "Waiting for pen"
                 self.device_error = None
                 LOG.info("Opened %d VO1060 interfaces", len(self.handles))
             else:
@@ -242,11 +250,22 @@ class Daemon:
         self.pressure_sequence += 1
         self.pressure_history.append([self.pressure_sequence, time.time(), raw, mapped])
 
-    def poll_input(self) -> None:
-        if self.pen_state is not None and self.last_pen_time and time.monotonic() - self.last_pen_time > 0.5:
+    def clear_pen_detection(self, reason: str) -> None:
+        self.detection.lost(time.monotonic(), reason)
+        if self.pen_state is not None:
             self.pen_state = {**self.pen_state, "pressure": 0, "mapped_pressure": 0, "in_range": False}
             self.add_pressure_sample(0, 0)
-            self.last_pen_time = 0
+        self.last_pen_time = 0
+        if self.pen_output is not None:
+            try:
+                self.pen_output.release()
+            except OSError as exc:
+                self.output_error = str(exc)
+                self.close_output()
+
+    def poll_input(self) -> None:
+        if self.pen_state is not None and self.last_pen_time and time.monotonic() - self.last_pen_time > PEN_TIMEOUT:
+            self.clear_pen_detection("Report timeout")
         if self.pen_output is not None:
             try:
                 self.pen_output.expire()
@@ -266,6 +285,9 @@ class Daemon:
                 if not report:
                     break
                 self.reports += 1
+                if is_range_exit(report):
+                    self.clear_pen_detection("Tablet range exit")
+                    continue
                 raw_pressure = reported_pressure(report)
                 if raw_pressure is not None:
                     self.pressure_max_seen = max(self.pressure_max_seen, raw_pressure)
@@ -283,6 +305,7 @@ class Daemon:
                         "in_range": True,
                     }
                     self.last_pen_time = time.monotonic()
+                    self.detection.received(self.last_pen_time)
                     self.add_pressure_sample(pen.pressure, mapped)
                     if self.pen_output is not None:
                         try:

@@ -1,173 +1,159 @@
 # TabletKey
 
-A **standalone Linux driver** for the VEIKK Voila VO1060 (`2feb:000b`), built with Python,
-Typer, PySide6, hidraw, and uinput. The current desktop target is **COSMIC Wayland**.
+**Your tablet. Your shortcuts. Your writing space.**
 
-TabletKey initializes the device, handles pen position/pressure and barrel buttons,
-provides global shortcut and wheel mappings, and supports selecting one or all enabled monitors.
-The user confirmed pen movement and scrolling after unplug/replug with OTD stopped.
-See [hardware evidence](docs/hardware.md) for exactly what has been verified.
+A standalone Linux driver and visual settings app for the **VEIKK Voila VO1060**.
+Give its four keys, dial button, and wheel useful jobs. Keep the pen comfortable, choose where
+it writes, and see what the tablet is doing—all from one small Python application.
 
-## First Run
+Built for **COSMIC on Wayland**. Focused on **one device: USB `2feb:000b`**.
+No OpenTabletDriver installation required.
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then run on the Linux host:
+[Get started](https://hyp3r00t.github.io/TabletKey/getting-started/) ·
+[User guide](https://hyp3r00t.github.io/TabletKey/guide/) ·
+[Report a problem](https://github.com/HYP3R00T/TabletKey/issues)
+
+![TabletKey settings: a labelled tablet diagram and shortcut editor](https://raw.githubusercontent.com/HYP3R00T/TabletKey/main/docs/assets/screenshots/buttons.png)
+
+## A Few Good Jobs for Your Tablet
+
+- **Make each control yours.** Pick Undo, Copy, scrolling, volume, or another preset.
+  Record a custom keyboard shortcut and give it a name you recognise.
+- **Know which key you pressed.** Controls light up on the tablet diagram as you press them.
+  Match physical keys and wheel direction without memorising hexadecimal identifiers.
+- **Keep a comfortable touch.** Compare raw and mapped pressure, try Light touch,
+  or calibrate full output to a comfortable stroke.
+- **Choose your writing space.** Select a monitor, rotate the mapping, or drag the active tablet area.
+- **See hover detection.** A live timeline separates tablet range exits from report timeouts.
+- **Leave it running.** The detached daemon owns input; closing settings leaves your mappings active.
+  Reconnect the tablet without restarting the app.
+
+## Start Here
+
+**Release status:** preparing the first PyPI release. The package commands below are the intended
+published interface; until that release exists, use the source instructions further down.
+
+On a COSMIC Linux desktop with [uv installed](https://docs.astral.sh/uv/getting-started/installation/):
 
 ```sh
+# After the first PyPI release: one-time device-access setup
+uvx tabletkey setup --install
+
+# Open settings
+uvx tabletkey
+```
+
+Connect your VO1060, click **Start driver**, set your controls, and click **Save changes**.
+The bare command opens the GUI; it does not start the driver automatically.
+Run these commands as your normal user. Only the explicit setup command invokes sudo.
+
+For regular use, a persistent tool installation gives the background driver a stable environment:
+
+```sh
+uv tool install tabletkey
+tabletkey
+```
+
+`uvx` uses a cached environment. Stop the daemon before clearing uv's cache or upgrading/removing
+its tool environment. Python 3.12+ is required. PySide6 Essentials and evdev are installed as package dependencies;
+`cosmic-randr`, udev, and the Linux uinput module come from the operating system.
+Some systems need compiler/Python headers to build evdev and system Qt libraries to open the GUI.
+See [installation and troubleshooting](https://hyp3r00t.github.io/TabletKey/getting-started/).
+
+### Run from Source Today
+
+```sh
+git clone https://github.com/HYP3R00T/TabletKey.git
+cd TabletKey
 uv sync --locked --managed-python
 uv run tabletkey setup --install
-uv run tabletkey daemon start
 uv run tabletkey
 ```
 
-`setup --install` is one-time administrator setup. It displays the rules, asks sudo to install
-`/etc/udev/rules.d/70-tabletkey.rules` and `/etc/modules-load.d/tabletkey.conf`, loads the uinput
-kernel module, reloads udev rules, and refreshes only the VO1060 nodes
-and uinput. It grants the active local session access to this tablet and virtual input output;
-it does not add you to the input group or grant access to other physical keyboards.
-Run `uv run tabletkey setup` to preview without changing anything.
+## One App, Two Parts
 
-The default profile enables the pen over the primary enabled monitor, full tablet area, and wheel
-scrolling. Shortcut buttons start unassigned. Older settings retain their bindings and output-pause
-flag when migrated; enable output in settings if an older profile was paused.
+**Settings** is the window where you map controls and adjust the pen.
+**The daemon** is the background process that reads the tablet and produces Linux input.
+Closing the window keeps the daemon running. Stopping the daemon releases input and returns control
+to the system's native tablet handling; TabletKey's mappings then stop working.
 
-## Daemon and Settings
+| After publication | What it does |
+|---|---|
+| `uvx tabletkey` | Open settings |
+| `uvx tabletkey daemon start` | Start in the background; safe to repeat |
+| `uvx tabletkey daemon status` | Check process, tablet connection, and output |
+| `uvx tabletkey daemon stop` | Release input and stop |
+| `uvx tabletkey daemon run` | Run in the terminal until Ctrl+C |
+| `uvx tabletkey doctor` | Check device access without changing tablet mode |
 
-```sh
-uv run tabletkey daemon start
-uv run tabletkey daemon status
-uv run tabletkey daemon stop
-uv run tabletkey gui
-```
+From a checkout, replace `uvx tabletkey` with `uv run tabletkey`.
+No login service is installed, and setup does not start the daemon automatically.
 
-The bare `tabletkey` command also opens settings. Start detaches from the terminal and is safe to
-repeat. Closing settings leaves the daemon running. Stop releases virtual keys, pen contact, and
-native input grabs. Reconnect the tablet while the daemon runs; it rediscovers and initializes it.
-No login service is installed.
+## A Pen That Fits Your Hand
 
-To run in the terminal until Ctrl+C:
+![TabletKey Pressure tab with response controls and an empty live graph](https://raw.githubusercontent.com/HYP3R00T/TabletKey/main/docs/assets/screenshots/pressure.png)
 
-```sh
-uv run tabletkey daemon run
-```
+**Light touch** reaches full output at 65% of the sensor range and boosts lighter strokes.
+Prefer your own response? Clear the graph, make comfortable strokes, and choose
+**Use measured peak as 100%**. There is no need to press harder to chase the sensor maximum.
 
-Status distinguishes process state, connection, initialization, virtual pen, and mapped output.
-`daemon status --json` also includes recent control events and pen-report counters.
-Status exits with 1 when off, 0 when running. Logs rotate under `$XDG_RUNTIME_DIR/tabletkey/`.
-For lifecycle diagnostics without touching hardware, use `daemon start --no-device`.
+The graph separates unchanged sensor pressure from the driver's mapped output.
+The response preview changes as you edit; actual output changes when you save.
+Pressure is not hover height, and the app does not claim to measure force in newtons.
+Screenshots show the real application layout with no fabricated live measurements.
 
-## Pen and Monitor Mapping
+## What Is Supported?
 
-The **Pen & display** tab shows the real tablet with its active writing rectangle.
-Drag the green corner handles to resize it, drag inside to move it, or drag outside to draw a new area.
-**Use the whole tablet** resets the selection. Exact percentages remain available under **Fine-tune percentages**.
-The pen position dot and pressure percentage show activity while you adjust the preview.
+| Area | Current scope |
+|---|---|
+| Hardware | VEIKK Voila VO1060, USB `2feb:000b` only |
+| Desktop | COSMIC Wayland on Linux; other compositors are unverified |
+| Pen | Position, pressure response, hover state, barrel buttons |
+| Controls | Four keys, dial press, wheel; global shortcuts and scrolling |
+| Mapping | Monitor selection, all-monitor mode, crop, rotation |
+| Profiles | One global profile; no per-application switching |
+| Not implemented | Tilt output, other tablet models, Windows/macOS support, hover smoothing |
 
-Choose a monitor (or all enabled monitors), an orientation, and whether the pen is enabled.
-Click **Save changes** to apply the rectangle, monitor, rotation, and pen state together.
+**Early software, tested on the owner's device.** Standalone pen movement and wheel scrolling
+were physically confirmed after reconnecting without OpenTabletDriver. Comfortable pressure and
+hover detection were also confirmed. Multi-monitor crossing, crop/rotation ergonomics,
+pressure-aware brush behaviour, and reboot behaviour need more validation.
+[Hardware evidence](https://hyp3r00t.github.io/TabletKey/hardware/) separates observations from inferences.
 
-```sh
-uv run tabletkey displays
-uv run tabletkey config display HDMI-A-1
-uv run tabletkey config display all
-```
+## Device Access and Your Settings
 
-For all-monitor mode, normalized tablet coordinates span the logical desktop. TabletKey creates
-one virtual pen per target display and transfers proximity as the pen crosses outputs. Gaps are
-clamped to the nearest display. Monitor changes are polled and virtual output is rebuilt as needed.
+Setup installs target-specific udev rules and a uinput module-loading configuration. The rules grant
+the active local session access to the VO1060 and the virtual input interface; they do not grant
+access to other physical keyboards or add you to the input group.
 
-COSMIC routes native tablet input per device. TabletKey therefore maintains only entries named
-`TabletKey VO1060 Pen / <connector>` in COSMIC's `input_devices` settings. Existing unrelated
-entries are preserved. A first-write backup is saved beside that file as `input_devices.tabletkey.bak`.
-Malformed or concurrently modified configuration is rejected rather than overwritten.
+The running driver initialises the tablet and exclusively grabs its native input nodes to prevent
+duplicate events. It refuses to compete with a running OpenTabletDriver daemon.
+Diagnostics stay read-only. Nothing disables or uninstalls another driver automatically.
 
-Single-monitor movement is verified locally. Pressure-aware drawing, multi-monitor crossing,
-rotation/cropping ergonomics, tilt, and multi-button rollover need further hardware/application
-validation. Tilt output is not implemented.
+Settings are stored in `~/.config/tabletkey/` (or `$XDG_CONFIG_HOME/tabletkey/`).
+The app preserves unrelated COSMIC input settings and backs up that configuration before its first write.
+[The user guide](https://hyp3r00t.github.io/TabletKey/guide/) covers files, mappings, and stopping/uninstalling.
 
-## Pressure
-
-The **Pressure** tab separates unchanged sensor readings from mapped driver pressure.
-The live graph shows both over the last ten seconds; short input peaks are retained between UI updates.
-The response graph previews how sensor pressure will be mapped. It shows the driver's response,
-not a measurement of physical force in newtons or a test of the sensor's mechanical linearity.
-
-- **Linear** preserves the previous one-to-one mapping against the verified 8191-count sensor range.
-- **Light touch** reaches full output at 65% sensor pressure and boosts lighter strokes.
-- **Full output at** selects how much sensor pressure produces 100% mapped pressure.
-- Move the curve left to boost light strokes, or right for a firmer response.
-- **Ignore below** suppresses low-level noise; leave it at zero unless needed.
-
-For personal calibration, clear the graph, make a few comfortable strokes, then select
-**Use measured peak as 100%**. Do not push harder to chase the sensor's maximum.
-Click **Save changes** to apply the response. The time graph remains actual mapped telemetry;
-unsaved changes affect only the response preview.
-
-Pressure depends on force, not holding duration. The readout resets after a pen-input timeout,
-so the last pressure does not stay displayed after lift. Unexpected values above the declared
-sensor range produce a diagnostic warning and block peak calibration rather than silently changing
-that range. Pressure history is bounded and held in memory, not recorded to disk.
-Existing profiles migrate to linear response; the previous pen area, monitor, bindings, and pause state survive.
-
-## Button and Wheel Mappings
-
-The **Buttons & wheel** tab uses the official product photo. Click a pictured control,
-choose a control below it, or press one on the tablet. Physical activity flashes green.
-The selected control has a blue outline and an action editor beside the picture.
-
-- Choose common actions from the dropdown: Undo, Redo, Copy, Paste, browser actions, scrolling, volume, and more.
-- Choose **Custom shortcut**, click **Record a shortcut**, and press the desired keys.
-- Give controls your own names, such as "Brush" or "Undo stroke".
-- Use **Match the four keys to the picture** to confirm physical order: start nearest the dial and move away.
-- Use **Identify wheel directions**, then turn clockwise once. The UI learns both direction names without guessing.
-- **Reverse scrolling** swaps the two wheel bindings.
-
-Names, learned layout, and wheel orientation are saved in `interface.json` beside the driver settings.
-They do not change hardware identifiers or overwrite existing bindings. The photo and hit areas ship with
-the app; no network is needed to display them. Image attribution is in `resources/PHOTO.txt`.
-
-All changes apply when you click **Save changes**; **Discard changes** reloads saved values.
-Closing settings leaves the driver running. Per-application profiles are not implemented.
-The CLI continues to address hardware identifiers for scripting:
+## Work on TabletKey
 
 ```sh
-uv run tabletkey config set button_08 'CTRL+Z'
-uv run tabletkey config output --disable
-uv run tabletkey config output --enable
-```
-
-Pausing output pauses pen, shortcuts, and wheel output. Standalone input remains owned until stop.
-Unverified combined-button reports release held keys and pause output briefly, preventing stuck shortcuts.
-
-## Diagnostics and Files
-
-```sh
-uv run tabletkey doctor
-mkdir -p captures
-uv run tabletkey record --label top-button --seconds 10 --output captures/top-button.jsonl
-uv run tabletkey inspect captures/top-button.jsonl
-```
-
-Doctor and recording stay read-only; they do not initialize or grab the tablet.
-Captures stay local under ignored `captures/`; existing evidence is never overwritten.
-
-Settings live at `$XDG_CONFIG_HOME/tabletkey/settings.json` (normally `~/.config/tabletkey/settings.json`).
-Manual file edits require `daemon reload`. Runtime files use a private directory under
-`$XDG_RUNTIME_DIR`, or a private fallback under `/tmp` if that variable is absent.
-
-Run the driver on the Linux desktop host, not inside a devcontainer or agent sandbox.
-It requires access to the target hidraw and native input nodes plus `/dev/uinput`.
-Only setup invokes sudo; run the daemon and UI as your normal user.
-uv-managed Python includes the headers needed to build evdev; system Python may require development headers.
-
-## Development
-
-```sh
+uv sync --locked --managed-python
 uv run pytest
 uv run ruff check .
 uv run ruff format --check .
 uv run ty check
+uvx zensical serve
 ```
 
-Tests use synthetic reports, fake devices, temporary configuration, and offscreen Qt. Real subprocess
-lifecycle tests explicitly disable hardware access. They require local Unix sockets on Linux.
-See [architecture](docs/architecture.md) for lifecycle and implementation boundaries.
+Tests use fake devices, temporary settings, and offscreen Qt; lifecycle tests disable hardware access.
+See the [architecture](https://hyp3r00t.github.io/TabletKey/architecture/) and
+[release guide](https://hyp3r00t.github.io/TabletKey/releasing/) for package checks and screenshot refreshes.
+Raw captures stay local in ignored `captures/`. Please report the USB identity, desktop, symptoms,
+and `doctor` output rather than uploading unrelated input or proprietary driver binaries.
+
+## Credits and License
+
+TabletKey is an independent project, not affiliated with VEIKK. Protocol research references
+OpenTabletDriver's public configuration and parsers; there is no OTD runtime dependency.
+The bundled tablet schematic is original project artwork. Code, artwork, and documentation are
+[MIT licensed](https://github.com/HYP3R00T/TabletKey/blob/main/LICENSE).

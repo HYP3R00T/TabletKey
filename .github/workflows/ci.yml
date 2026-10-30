@@ -52,3 +52,12 @@ jobs:
         run: uv sync --locked --managed-python
       - name: Run hardware-independent tests
         run: uv run pytest
+      - name: Build wheel and source distribution
+        run: uv build
+      - name: Validate package metadata and README
+        run: uvx twine check --strict dist/*
+      - name: Smoke-test the installed wheel entry point
+        run: |
+          wheel=$(realpath dist/*.whl)
+          cd "$(mktemp -d)"
+          uvx --from "$wheel" tabletkey --help

@@ -68,12 +68,33 @@ or mismatched sensor maximum in that test. It is not a measurement of physical f
 The 74-test suite includes identity response, monotonic curves, full-output scaling, deadzone/contact
 consistency, peak retention, idle reset, payload bounds, range diagnostics, profile migration, and GUI save.
 
+## Hover Capture — 2026-10-31
+
+The user completed `hover-range-test.jsonl` while raising/lowering the pen with the mouse still.
+The complete capture contains 5409 thirteen-byte reports on interface 2:
+5357 `09 41 A0` hover reports, 50 `09 41 A1` contact reports, and two `09 41 C0` reports.
+`C0` follows in-range reports and precedes renewed hover, with exit-to-return intervals of
+5.212 ms and 343.845 ms. This agrees with the upstream
+[VEIKK V1 range-exit parser](https://github.com/OpenTabletDriver/OpenTabletDriver/blob/0.6.x/OpenTabletDriver.Configurations/Parsers/Veikk/VeikkV1ReportParser.cs).
+
+The old decoder ignored `C0` and used a 500 ms silence fallback. Neither observed gap between
+valid pen reports exceeded that timeout (largest: 349.019 ms), so this capture does **not** establish
+that the timeout caused the reported cursor flicker. Explicit exits now release contact/proximity,
+and the new diagnostics distinguish hardware exits from silence timeouts. The user subsequently confirmed detection works, but could not reliably correlate cursor flicker
+with the counters and did not reproduce a problem during that check. No hover smoothing was added.
+
+There is no established distance or signal-intensity field. Upstream's
+[tilt decoder](https://github.com/OpenTabletDriver/OpenTabletDriver/blob/0.6.x/OpenTabletDriver.Configurations/Parsers/Veikk/VeikkTiltTabletReport.cs)
+uses bytes 11–12 for signed tilt, not height. Millimetres require an external measurement;
+packet rate/gaps cannot be relabelled as detection intensity. Diagnostics retain binary transitions
+and timing only; no new raw capture logging is enabled.
+
 ## Remaining Validation
 
 Pressure decoding/output is implemented, but brush-width response in a pressure-aware drawing app
 has not been specifically confirmed. Multi-monitor crossing, crop/rotation ergonomics, sustained
 stationary contact, simultaneous controls, repeat behavior, and reboot/startup need further tests.
-Tilt and per-app profiles are not implemented. No OTD uninstall or permanent service disable has occurred.
+Tilt and per-app profiles are not implemented. OTD was subsequently removed by the user; standalone operation remains the supported path.
 
 Raw diagnostics remain read-only. Standalone daemon startup is the explicit device-initializing,
 native-input-grabbing path; do not confuse the guarantees of those two modes.
