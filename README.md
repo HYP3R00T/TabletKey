@@ -1,6 +1,7 @@
 <h1 align="center">TabletKey</h1>
 
 <p align="center">
+  <a href="https://pypi.org/project/tabletkey/"><img src="https://img.shields.io/pypi/v/tabletkey?style=flat-square" alt="PyPI version"></a>
   <a href="https://tabletkey.hyperoot.dev/"><img src="https://img.shields.io/badge/docs-explore-176b60?style=flat-square" alt="Documentation"></a>
   <a href="https://github.com/sponsors/HYP3R00T"><img src="https://img.shields.io/badge/sponsor-%E2%99%A5-ea4aaa?style=flat-square" alt="Sponsor TabletKey"></a>
 </p>
@@ -28,4 +29,4 @@
 Independent of VEIKK. Protocol research references [OpenTabletDriver](https://github.com/OpenTabletDriver/OpenTabletDriver).
 Code, documentation, and original tablet artwork: [MIT](https://github.com/HYP3R00T/TabletKey/blob/main/LICENSE).
 
-<p align="center">Made with ❤️ by <a href="https://github.com/HYP3R00T">HyperRoot</a></p>
+<p align="center">Made with ❤️ by <a href="https://github.com/HYP3R00T">HYP3R00T</a></p>
