@@ -36,6 +36,8 @@ jobs:
   python-tests:
     name: Python tests
     runs-on: ubuntu-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -46,6 +48,11 @@ jobs:
         with:
           version: "0.12.7"
           enable-cache: true
+      - name: Install Qt runtime libraries
+        run: |
+          # QtGui links EGL/GL even when the offscreen platform is selected.
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libegl1 libgl1 libxkbcommon0
       - name: Install Python with build headers
         run: uv python install
       - name: Install locked dependencies

@@ -3,6 +3,20 @@
 TabletKey is built for one combination: **VEIKK Voila VO1060 (`2feb:000b`) + COSMIC Wayland + Linux**.
 Start with that setup. Other VEIKK models and other compositors are not verified.
 
+## Desktop compatibility
+
+The device protocol and virtual keyboard/wheel output use Linux hidraw/uinput rather than a
+Wayland-only input API. Broader Linux support is feasible, but it is not implemented end to end.
+
+**The current pen/display backend requires COSMIC.** It queries `cosmic-randr` for monitor geometry
+and writes COSMIC-specific pen routing. With pen enabled (the default), a display-query failure
+prevents the entire output setup from completing, including shortcuts and scrolling.
+Disabling the pen avoids that backend, but shortcut/wheel-only use on other desktops is unverified.
+
+Supporting GNOME, KDE, or X11 properly needs alternative monitor discovery/routing and physical
+validation. Changing “COSMIC” to “Wayland” in the description would overstate current compatibility.
+This is a desktop-integration limitation, not a fundamental restriction of the tablet protocol.
+
 ## Before you start
 
 - Connect the tablet to the Linux desktop host, outside a container or sandbox.

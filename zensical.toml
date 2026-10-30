@@ -1,7 +1,7 @@
 [project]
 site_name = "TabletKey"
 site_description = "Your tablet. Your shortcuts. Standalone VEIKK VO1060 driver and visual settings for COSMIC Linux."
-site_url = "https://hyp3r00t.github.io/TabletKey/"
+site_url = "https://tabletkey.hyperoot.dev/"
 extra_css = ["stylesheets/extra.css"]
 repo_name = "HYP3R00T/TabletKey"
 repo_url = "https://github.com/HYP3R00T/TabletKey"

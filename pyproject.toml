@@ -22,8 +22,8 @@ classifiers = [
 dependencies = ["PySide6-Essentials>=6.8,<7", "evdev>=1.9,<2", "typer>=0.16,<1"]
 
 [project.urls]
-Documentation = "https://hyp3r00t.github.io/TabletKey/"
-Homepage = "https://github.com/HYP3R00T/TabletKey"
+Documentation = "https://tabletkey.hyperoot.dev/"
+Homepage = "https://tabletkey.hyperoot.dev/"
 Issues = "https://github.com/HYP3R00T/TabletKey/issues"
 Repository = "https://github.com/HYP3R00T/TabletKey"
 
