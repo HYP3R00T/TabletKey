@@ -9,11 +9,10 @@ from pathlib import Path
 from tabletkey.config import config_path
 from tabletkey.protocol import CONTROLS
 
+DEFAULT_KEY_ORDER = ("button_01", "button_02", "button_04", "button_08")
+
 DEFAULT_NAMES = {
-    "button_08": "Key 1",
-    "button_04": "Key 2",
-    "button_02": "Key 3",
-    "button_01": "Key 4",
+    **{control: f"Key {index}" for index, control in enumerate(DEFAULT_KEY_ORDER, 1)},
     "button_10": "Dial press",
     "wheel_01": "Wheel direction A",
     "wheel_02": "Wheel direction B",
@@ -24,7 +23,7 @@ DEFAULT_NAMES = {
 class UiPreferences:
     names: dict[str, str] = field(default_factory=dict)
     wheel_clockwise: str | None = None
-    key_order: list[str] = field(default_factory=lambda: ["button_08", "button_04", "button_02", "button_01"])
+    key_order: list[str] = field(default_factory=lambda: list(DEFAULT_KEY_ORDER))
 
     def name(self, control: str) -> str:
         if self.names.get(control):

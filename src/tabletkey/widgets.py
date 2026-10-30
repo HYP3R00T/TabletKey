@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QComboBox, QKeySequenceEdit, QLabel, QPushButton, 
 
 from tabletkey.config import parse_binding
 from tabletkey.pen import MAX_X, MAX_Y
+from tabletkey.ui_preferences import DEFAULT_KEY_ORDER
 
 PRESETS = (
     ("Unassigned", "NONE"),
@@ -192,18 +193,18 @@ class TabletView(QWidget):
     SOURCE = QRectF(130, 390, 1310, 835)
     WRITING = QRectF(270, 562, 1005, 598)
     KEYS = {
-        "button_08": QRectF(317, 435, 76, 78),
-        "button_04": QRectF(397, 435, 76, 78),
-        "button_02": QRectF(477, 435, 76, 78),
-        "button_01": QRectF(556, 435, 130, 78),
+        "button_01": QRectF(317, 435, 76, 78),
+        "button_02": QRectF(397, 435, 76, 78),
+        "button_04": QRectF(477, 435, 76, 78),
+        "button_08": QRectF(556, 435, 130, 78),
         "button_10": QRectF(186, 449, 49, 49),
     }
 
     def __init__(self, edit_area: bool = False) -> None:
         super().__init__()
         self.edit_area = edit_area
-        self.selected = "button_08"
-        self.key_order = ["button_08", "button_04", "button_02", "button_01"]
+        self.selected = DEFAULT_KEY_ORDER[0]
+        self.key_order = list(DEFAULT_KEY_ORDER)
         self.active: set[str] = set()
         self.area = (0.0, 0.0, 1.0, 1.0)
         self.pen: tuple[float, float, float] | None = None

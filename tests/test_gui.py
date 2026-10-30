@@ -46,7 +46,7 @@ def test_live_photo_highlights_and_presets(window):
     assert not window.tablet.image.isNull()
     assert "button_04" in window.tablet.active
     assert window.selected == "button_04"
-    assert "Key 2 pressed" in window.events.toPlainText()
+    assert "Key 3 pressed" in window.events.toPlainText()
     picker = window.bindings["button_04"]
     picker.choices.setCurrentIndex(picker.choices.findData("CTRL+Z"))
     assert picker.binding() == "CTRL+Z"
@@ -76,9 +76,9 @@ def test_save_preserves_pen_area_rotation_display_and_names(window, monkeypatch)
     assert settings.pen.rotation == 90 and settings.pen.display == "all"
     assert not settings.pen.enabled
     saved = UiPreferences.load()
-    assert saved.name("button_08") == "Undo brush stroke"
+    assert saved.name("button_01") == "Undo brush stroke"
     assert saved.wheel_clockwise == "wheel_02"
-    assert saved.key_order == ["button_01", "button_02", "button_04", "button_08"]
+    assert saved.key_order == ["button_08", "button_04", "button_02", "button_01"]
 
 
 def test_invalid_crop_is_not_saved(window, monkeypatch):
@@ -105,11 +105,11 @@ def test_match_keys_updates_image_positions_without_changing_bindings(window):
     window.update_status(status())
     window.bindings["button_01"].set_binding("CTRL+S")
     window.match_keys()
-    for sequence, control in enumerate(("button_01", "button_02", "button_04", "button_08"), 1):
+    for sequence, control in enumerate(("button_08", "button_04", "button_02", "button_01"), 1):
         window.update_status(status([{"sequence": sequence, "control": control, "pressed": True}], sequence))
-    assert window.preferences.key_order == ["button_01", "button_02", "button_04", "button_08"]
-    assert window.preferences.name("button_01") == "Key 1"
-    assert window.tablet.control_rects()["button_01"] == TabletView.KEYS["button_08"]
+    assert window.preferences.key_order == ["button_08", "button_04", "button_02", "button_01"]
+    assert window.preferences.name("button_08") == "Key 1"
+    assert window.tablet.control_rects()["button_08"] == TabletView.KEYS["button_01"]
     assert window.bindings["button_01"].binding() == "CTRL+S"
 
 
@@ -134,7 +134,7 @@ def test_clicking_photo_selects_physical_control(window):
     target = window.tablet.project(TabletView.KEYS["button_02"]).center().toPoint()
     QTest.mouseClick(window.tablet, Qt.MouseButton.LeftButton, pos=target)
     assert window.selected == "button_02"
-    assert window.selected_title.text() == "Key 3"
+    assert window.selected_title.text() == "Key 2"
 
 
 @pytest.mark.parametrize(
@@ -162,6 +162,7 @@ def test_custom_selection_requires_a_recorded_shortcut(window):
 
 
 def test_record_button_captures_keyboard_input(window):
+    window.select_control("button_08")
     window.show()
     QApplication.processEvents()
     picker = window.bindings["button_08"]
@@ -171,3 +172,23 @@ def test_record_button_captures_keyboard_input(window):
     window.name_field.setFocus()
     QApplication.processEvents()
     assert picker.binding() == "CTRL+Z"
+
+
+def test_physical_key_order_matches_numbered_photo_without_reassigning_actions(window):
+    window.update_status(status())
+    before = {control: picker.binding() for control, picker in window.bindings.items()}
+    for number, control in enumerate(("button_01", "button_02", "button_04", "button_08"), 1):
+        window.update_status(status([{"sequence": number, "control": control, "pressed": True}], number))
+        window.tick()
+        assert window.selected_title.text() == f"Key {number}"
+        assert window.tablet.control_rects()[control] == list(TabletView.KEYS.values())[number - 1]
+        assert control in window.tablet.active
+    assert {control: picker.binding() for control, picker in window.bindings.items()} == before
+
+
+def test_saved_key_calibration_is_preserved(window):
+    custom = UiPreferences(key_order=["button_04", "button_08", "button_01", "button_02"])
+    custom.save()
+    window.load()
+    assert window.preferences.key_order == custom.key_order
+    assert window.tablet.key_order == custom.key_order

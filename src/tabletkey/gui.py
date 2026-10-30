@@ -28,7 +28,7 @@ from PySide6.QtWidgets import (
 from tabletkey import daemon, ipc
 from tabletkey.config import Settings, load_settings
 from tabletkey.protocol import CONTROLS
-from tabletkey.ui_preferences import UiPreferences
+from tabletkey.ui_preferences import DEFAULT_KEY_ORDER, UiPreferences
 from tabletkey.widgets import BindingPicker, TabletView, binding_caption
 
 
@@ -52,7 +52,7 @@ class Window(QMainWindow):
         self.flashes: dict[str, float] = {}
         self.pressed: set[str] = set()
         self.last_pen: dict | None = None
-        self.selected = "button_08"
+        self.selected = DEFAULT_KEY_ORDER[0]
         self.learning_clockwise = False
         self.matching_keys: list[str] | None = None
         self.loading = True

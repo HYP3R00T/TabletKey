@@ -27,6 +27,11 @@ The user recorded `otd-unmapped-retry.jsonl` after removing OTD's auxiliary mapp
 - Associating `10` with the center button remains an inference from the user's sequence.
 - Physical wheel polarity has not been isolated; UI mappings can be swapped.
 
+The user later confirmed that physical keys 1–4 match identifiers `01`, `02`, `04`, `08`,
+in the order shown in the product image. The earlier mixed capture order did not establish physical
+positions. The UI default now follows this confirmed order; saved custom calibrations and hardware
+bindings are preserved.
+
 Raw captures remain local under ignored `captures/` and are not committed.
 
 ## Standalone Verification — 2026-10-30
