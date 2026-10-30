@@ -9,4 +9,5 @@ Standalone Python/uv driver for the VEIKK VO1060 on COSMIC/Linux. Scope is this 
 - Access only target USB 2feb:000b; never record unrelated keyboard input.
 - Keep raw captures under ignored captures/. Do not commit captures or proprietary Windows binaries without explicit authorization.
 - Validate changes with uv run pytest, uv run ruff check ., uv run ruff format --check ., and uv run ty check.
+- Maintain CHANGELOG.md by hand for user-visible changes; follow docs/changelog.md.
 - No commits, pushes, publishing, or deployment without explicit user authorization.

@@ -7,7 +7,7 @@ uvx tabletkey doctor
 uvx tabletkey daemon status
 ```
 
-Until the first PyPI release, use `uv run tabletkey` from your checkout instead of `uvx tabletkey`.
+From a source checkout, use `uv run tabletkey` instead of `uvx tabletkey`.
 Status distinguishes the process, USB connection, initialisation, virtual pen, and mapped output.
 A process can be running while output is unavailable.
 

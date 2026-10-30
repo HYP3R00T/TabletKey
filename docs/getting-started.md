@@ -1,21 +1,13 @@
 # Get your tablet ready
 
-TabletKey is built for one combination: **VEIKK Voila VO1060 (`2feb:000b`) + COSMIC Wayland + Linux**.
-Start with that setup. Other VEIKK models and other compositors are not verified.
+Welcome to TabletKey. Connect your **VEIKK Voila VO1060**, open the app, and make its controls your own.
 
 ## Desktop compatibility
 
-The device protocol and virtual keyboard/wheel output use Linux hidraw/uinput rather than a
-Wayland-only input API. Broader Linux support is feasible, but it is not implemented end to end.
-
-**The current pen/display backend requires COSMIC.** It queries `cosmic-randr` for monitor geometry
-and writes COSMIC-specific pen routing. With pen enabled (the default), a display-query failure
-prevents the entire output setup from completing, including shortcuts and scrolling.
-Disabling the pen avoids that backend, but shortcut/wheel-only use on other desktops is unverified.
-
-Supporting GNOME, KDE, or X11 properly needs alternative monitor discovery/routing and physical
-validation. Changing “COSMIC” to “Wayland” in the description would overstate current compatibility.
-This is a desktop-integration limitation, not a fundamental restriction of the tablet protocol.
+TabletKey supports the **VEIKK Voila VO1060 (USB `2feb:000b`) on COSMIC Wayland**.
+Pen and monitor mapping use COSMIC's desktop integration. Other Linux desktops and tablet models
+are not currently supported. The [architecture guide](architecture.md#desktop-integration) explains
+what broader desktop support would involve.
 
 ## Before you start
 
@@ -32,21 +24,8 @@ libraries—see [troubleshooting](troubleshooting.md) if the GUI cannot open.
 
 ## Open the app
 
-!!! info "First release in preparation"
-    The short PyPI commands become available after publication. Use the source checkout today.
-    An available package name alone does not mean a release has been uploaded.
-
-### From source, available now
-
-```sh
-git clone https://github.com/HYP3R00T/TabletKey.git
-cd TabletKey
-uv sync --locked --managed-python
-uv run tabletkey setup --install
-uv run tabletkey
-```
-
-### From PyPI, after publication
+With [uv installed](https://docs.astral.sh/uv/getting-started/installation/), run the one-time setup,
+then open settings:
 
 ```sh
 uvx tabletkey setup --install
@@ -54,7 +33,7 @@ uvx tabletkey
 ```
 
 The command is lowercase `tabletkey`. The bare command opens settings, as does `uvx tabletkey gui`.
-It does not silently start a hardware driver. Connect the tablet and click **Start driver**.
+Connect the tablet and click **Start driver** to enable TabletKey.
 
 For daily use, install the tool into a persistent environment:
 
@@ -67,6 +46,18 @@ Use `tabletkey` instead of `uvx tabletkey` in the following examples when instal
 [uv explains the difference between running and installing tools](https://docs.astral.sh/uv/concepts/tools/).
 The detached daemon uses the same Python environment that launched it: stop it before removing
 that environment, clearing uv's cache, or upgrading the tool.
+
+## From source
+
+TabletKey is written in Python. To explore the code or make changes:
+
+```sh
+git clone https://github.com/HYP3R00T/TabletKey.git
+cd TabletKey
+uv sync --locked --managed-python
+uv run tabletkey setup --install
+uv run tabletkey
+```
 
 ## What the one-time setup changes
 

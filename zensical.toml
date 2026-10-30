@@ -16,7 +16,8 @@ nav = [
   { Troubleshooting = "troubleshooting.md" },
   { "Hardware Evidence" = "hardware.md" },
   { Architecture = "architecture.md" },
-  { "Maintaining & Releasing" = "releasing.md" },
+  { "Changelog Guidelines" = "changelog.md" },
+  { "Maintaining & Publishing" = "releasing.md" },
 ]
 
 [project.theme]

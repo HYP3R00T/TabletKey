@@ -15,9 +15,8 @@
 <p align="center"><code>uvx tabletkey</code></p>
 
 <p align="center">
-  Available after the first PyPI release. <a href="https://tabletkey.hyperoot.dev/getting-started/">First-time setup &amp; source installation</a>.<br>
   Connect your tablet, click <strong>Start driver</strong>, and make it yours.<br>
-  Pen/display integration currently requires COSMIC; <a href="https://tabletkey.hyperoot.dev/getting-started/#desktop-compatibility">desktop compatibility</a>.
+  <a href="https://tabletkey.hyperoot.dev/getting-started/">First-time setup</a> · VEIKK VO1060 · COSMIC / Wayland
 </p>
 
 ![Map your keys and wheel](https://raw.githubusercontent.com/HYP3R00T/TabletKey/main/docs/assets/screenshots/buttons.png)

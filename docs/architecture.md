@@ -105,3 +105,13 @@ support the binary timeline and last-report age; brief exits remain visible in c
 polls. The max-gap statistic excludes deliberate out-of-range intervals. These are processing-time
 measurements, not hardware timestamps, distance estimates, or analogue signal measurements.
 No settings migration is needed; pressure responses and all existing options are preserved.
+
+## Desktop integration
+
+Hardware decoding and keyboard/wheel output use Linux hidraw/uinput. The pen backend queries
+`cosmic-randr` for monitor geometry and writes COSMIC-specific pen routing. With pen enabled,
+a display-query failure prevents the complete output setup from finishing, including shortcuts
+and scrolling. Disabling the pen avoids that backend, but use on other desktops is unverified.
+
+Supporting GNOME, KDE, or X11 needs alternative monitor discovery/routing and physical validation.
+This is a desktop-integration dependency rather than a restriction of the tablet protocol.

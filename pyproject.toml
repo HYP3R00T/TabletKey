@@ -31,7 +31,11 @@ Repository = "https://github.com/HYP3R00T/TabletKey"
 tabletkey = "tabletkey.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8,<10", "ruff>=0.16,<0.17", "ty>=0.0.75,<0.1"]
+dev = [
+  "pytest>=8,<10",
+  "ruff>=0.16,<0.17",
+  "ty>=0.0.75,<0.1",
+]
 
 [build-system]
 requires = ["uv_build>=0.12,<0.13"]
@@ -42,4 +46,4 @@ addopts = "-ra"
 testpaths = ["tests"]
 
 [tool.uv.build-backend]
-source-include = ["docs/**", "tools/**", "tests/**", "zensical.toml", "AGENTS.md", ".python-version"]
+source-include = ["docs/**", "tools/**", "tests/**", "zensical.toml", "AGENTS.md", ".python-version", "CHANGELOG.md"]
