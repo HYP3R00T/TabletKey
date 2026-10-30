@@ -12,7 +12,8 @@
 | `output.py` | Global chords and scrolling with balanced key release |
 | `daemon.py` | Connection lifecycle, initialization, output ownership, local IPC |
 | `ipc.py` | Private Unix socket with same-user peer checks |
-| `cli.py`, `gui.py` | Typer lifecycle/settings commands and PySide6 live editor |
+| `cli.py`, `gui.py` | Typer lifecycle/settings commands and the visual PySide6 editor |
+| `widgets.py`, `ui_preferences.py` | Photo hit areas, area dragging, shortcut picker, learned physical layout, and control names |
 | `setup.py` | Explicit one-time device-scoped udev installation |
 
 There is no OTD library or binary dependency. An optional handoff command can stop the existing
@@ -60,3 +61,15 @@ The user-facing wheel codes do not claim calibrated clockwise/counterclockwise l
 Automated tests use synthetic reports/fake devices and temporary settings. Real lifecycle subprocesses
 use `--no-device`, so running tests cannot stop OTD, initialize the physical tablet, or grab its input.
 Physical validation is documented separately in [hardware evidence](hardware.md).
+
+## Visual Editor
+
+The editor keeps hardware mappings in the existing version-2 settings schema, including all pen fields.
+Display names, physical key order, and learned wheel orientation are UI metadata in `interface.json`.
+Learning changes the picture/labels without changing which hardware event a binding belongs to.
+Startup ignores buffered historical events when identifying controls; only new presses count.
+
+The official photo is rendered from a bundled resource, with vector overlays for selection, activity,
+pen position, and the draggable tablet rectangle. The app does not contact the image host at runtime.
+Action presets and Qt shortcut recording both produce validated bindings understood by the existing daemon.
+The save path validates a complete profile before updating the driver; it does not omit pen fields.

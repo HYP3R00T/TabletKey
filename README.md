@@ -2,7 +2,6 @@
 
 A **standalone Linux driver** for the VEIKK Voila VO1060 (`2feb:000b`), built with Python,
 Typer, PySide6, hidraw, and uinput. The current desktop target is **COSMIC Wayland**.
-OpenTabletDriver is not a runtime dependency.
 
 TabletKey initializes the device, handles pen position/pressure and barrel buttons,
 provides global shortcut and wheel mappings, and supports selecting one or all enabled monitors.
@@ -16,7 +15,7 @@ Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then run 
 ```sh
 uv sync --locked --managed-python
 uv run tabletkey setup --install
-uv run tabletkey daemon start --replace-otd
+uv run tabletkey daemon start
 uv run tabletkey
 ```
 
@@ -26,10 +25,6 @@ kernel module, reloads udev rules, and refreshes only the VO1060 nodes
 and uinput. It grants the active local session access to this tablet and virtual input output;
 it does not add you to the input group or grant access to other physical keyboards.
 Run `uv run tabletkey setup` to preview without changing anything.
-
-`--replace-otd` explicitly pauses the conflicting OTD user service for this session if present.
-It does not disable or uninstall OTD. Without this option, TabletKey refuses to initialize while
-OTD is running. On a machine without OTD, plain `daemon start` is sufficient.
 
 The default profile enables the pen over the primary enabled monitor, full tablet area, and wheel
 scrolling. Shortcut buttons start unassigned. Older settings retain their bindings and output-pause
@@ -47,12 +42,12 @@ uv run tabletkey gui
 The bare `tabletkey` command also opens settings. Start detaches from the terminal and is safe to
 repeat. Closing settings leaves the daemon running. Stop releases virtual keys, pen contact, and
 native input grabs. Reconnect the tablet while the daemon runs; it rediscovers and initializes it.
-No login service is installed. OTD may start again on your next login if its service is still enabled.
+No login service is installed.
 
 To run in the terminal until Ctrl+C:
 
 ```sh
-uv run tabletkey daemon run --replace-otd
+uv run tabletkey daemon run
 ```
 
 Status distinguishes process state, connection, initialization, virtual pen, and mapped output.
@@ -62,13 +57,13 @@ For lifecycle diagnostics without touching hardware, use `daemon start --no-devi
 
 ## Pen and Monitor Mapping
 
-Settings provides:
+The **Pen & display** tab shows the real tablet with its active writing rectangle.
+Drag the green corner handles to resize it, drag inside to move it, or drag outside to draw a new area.
+**Use the whole tablet** resets the selection. Exact percentages remain available under **Fine-tune percentages**.
+The pen position dot and pressure percentage show activity while you adjust the preview.
 
-- Automatic primary output, a specific enabled monitor, or all enabled monitors.
-- Tablet rotation in 90° steps.
-- An active tablet rectangle, expressed as left/top/right/bottom percentages.
-- Pressure-sensitive pen output and two standard barrel buttons.
-- A live position/pressure readout.
+Choose a monitor (or all enabled monitors), an orientation, and whether the pen is enabled.
+Click **Save changes** to apply the rectangle, monitor, rotation, and pen state together.
 
 ```sh
 uv run tabletkey displays
@@ -91,15 +86,24 @@ validation. Tilt output is not implemented.
 
 ## Button and Wheel Mappings
 
-Press a physical control to see its code highlight. The four key codes are `08`, `04`, `02`, `01`
-in the recorded press order; `10` is inferred to be the dial-center press.
-Wheel codes `01` and `02` are mapped to scroll up/down by default. Their physical direction labels
-remain uncalibrated; **Swap wheel mappings** reverses them.
+The **Buttons & wheel** tab uses the official product photo. Click a pictured control,
+choose a control below it, or press one on the tablet. Physical activity flashes green.
+The selected control has a blue outline and an action editor beside the picture.
 
-Bindings accept `CTRL+Z`, `CTRL+SHIFT+Z`, `ALT+TAB`, `F5`, `VOLUMEUP`, `SCROLL_UP`,
-`SCROLL_DOWN`, or `NONE`. Save applies to a running daemon or persists for the next start.
-Global shortcuts go to the focused application or desktop handler, like a keyboard.
-There are no per-application profiles yet.
+- Choose common actions from the dropdown: Undo, Redo, Copy, Paste, browser actions, scrolling, volume, and more.
+- Choose **Custom shortcut**, click **Record a shortcut**, and press the desired keys.
+- Give controls your own names, such as "Brush" or "Undo stroke".
+- Use **Match the four keys to the picture** to confirm physical order: start nearest the dial and move away.
+- Use **Identify wheel directions**, then turn clockwise once. The UI learns both direction names without guessing.
+- **Reverse scrolling** swaps the two wheel bindings.
+
+Names, learned layout, and wheel orientation are saved in `interface.json` beside the driver settings.
+They do not change hardware identifiers or overwrite existing bindings. The photo and hit areas ship with
+the app; no network is needed to display them. Image attribution is in `resources/PHOTO.txt`.
+
+All changes apply when you click **Save changes**; **Discard changes** reloads saved values.
+Closing settings leaves the driver running. Per-application profiles are not implemented.
+The CLI continues to address hardware identifiers for scripting:
 
 ```sh
 uv run tabletkey config set button_08 'CTRL+Z'
