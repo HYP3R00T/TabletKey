@@ -84,6 +84,30 @@ Single-monitor movement is verified locally. Pressure-aware drawing, multi-monit
 rotation/cropping ergonomics, tilt, and multi-button rollover need further hardware/application
 validation. Tilt output is not implemented.
 
+## Pressure
+
+The **Pressure** tab separates unchanged sensor readings from mapped driver pressure.
+The live graph shows both over the last ten seconds; short input peaks are retained between UI updates.
+The response graph previews how sensor pressure will be mapped. It shows the driver's response,
+not a measurement of physical force in newtons or a test of the sensor's mechanical linearity.
+
+- **Linear** preserves the previous one-to-one mapping against the verified 8191-count sensor range.
+- **Light touch** reaches full output at 65% sensor pressure and boosts lighter strokes.
+- **Full output at** selects how much sensor pressure produces 100% mapped pressure.
+- Move the curve left to boost light strokes, or right for a firmer response.
+- **Ignore below** suppresses low-level noise; leave it at zero unless needed.
+
+For personal calibration, clear the graph, make a few comfortable strokes, then select
+**Use measured peak as 100%**. Do not push harder to chase the sensor's maximum.
+Click **Save changes** to apply the response. The time graph remains actual mapped telemetry;
+unsaved changes affect only the response preview.
+
+Pressure depends on force, not holding duration. The readout resets after a pen-input timeout,
+so the last pressure does not stay displayed after lift. Unexpected values above the declared
+sensor range produce a diagnostic warning and block peak calibration rather than silently changing
+that range. Pressure history is bounded and held in memory, not recorded to disk.
+Existing profiles migrate to linear response; the previous pen area, monitor, bindings, and pause state survive.
+
 ## Button and Wheel Mappings
 
 The **Buttons & wheel** tab uses the official product photo. Click a pictured control,

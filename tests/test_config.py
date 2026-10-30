@@ -42,7 +42,7 @@ def test_old_settings_migrate_without_losing_bindings_or_pause():
     old["output_enabled"] = False
     old["bindings"]["button_08"] = "CTRL+S"
     restored = Settings.from_dict(old)
-    assert restored.version == 2 and restored.pen.enabled
+    assert restored.version == 3 and restored.pen.enabled
     assert not restored.output_enabled
     assert restored.bindings["button_08"] == "CTRL+S"
 

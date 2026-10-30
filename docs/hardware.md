@@ -53,6 +53,21 @@ Afterward, daemon status showed initialized/connected/pen-active, 2729 decoded p
 2794 total reports, and no device or output error. OTD remained stopped.
 This establishes operation after a fresh connection without a running OTD daemon.
 
+## Pressure Response Verification — 2026-10-31
+
+The original response was linear against the declared 8191-count sensor maximum, with no user
+pressure adjustment. The new Pressure tab exposes sensor/mapped time history, a response preview,
+explicit sensitivity controls, and comfortable-peak calibration. Raw sensor values are preserved.
+
+After restarting TabletKey with telemetry, the user selected Light touch and saved it, then reported
+that pressure feels right. Read-back confirmed `full_input=0.65`, `gamma=0.7`, and `deadzone=0`.
+The active driver observed a raw maximum of 6276, no reports outside the declared sensor range,
+and no device/output errors. This supports the response adjustment without evidence of an overflow
+or mismatched sensor maximum in that test. It is not a measurement of physical force linearity.
+
+The 74-test suite includes identity response, monotonic curves, full-output scaling, deadzone/contact
+consistency, peak retention, idle reset, payload bounds, range diagnostics, profile migration, and GUI save.
+
 ## Remaining Validation
 
 Pressure decoding/output is implemented, but brush-width response in a pressure-aware drawing app

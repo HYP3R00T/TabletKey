@@ -7,6 +7,7 @@
 | `device.py` | Verify USB identity, initialize interface 2, read hidraw, grab only native VO1060 input |
 | `protocol.py` | Captured button and wheel pulse decoding |
 | `pen.py` | Pen decoding, tablet-area transform, pressure-sensitive uinput pens |
+| `pressure.py`, `pressure_widgets.py` | Shared validated pressure response, live history, and curve preview |
 | `displays.py` | COSMIC output geometry and app-owned per-monitor routing entries |
 | `config.py` | Validated settings, atomic writes, version-1 migration |
 | `output.py` | Global chords and scrolling with balanced key release |
@@ -54,8 +55,8 @@ Connector geometry is queried through the installed `cosmic-randr` tool.
 
 ## Defaults and Validation
 
-New version-2 profiles enable pen and wheel output. Shortcut buttons default to NONE.
-Version-1 profiles preserve mappings and output pause state while adding default pen settings.
+New version-3 profiles enable pen and wheel output with linear pressure response. Shortcut buttons default to NONE.
+Version-1/2 profiles preserve mappings, pen options, and output pause state while adding linear pressure settings.
 The user-facing wheel codes do not claim calibrated clockwise/counterclockwise labels.
 
 Automated tests use synthetic reports/fake devices and temporary settings. Real lifecycle subprocesses
@@ -64,7 +65,7 @@ Physical validation is documented separately in [hardware evidence](hardware.md)
 
 ## Visual Editor
 
-The editor keeps hardware mappings in the existing version-2 settings schema, including all pen fields.
+The editor keeps hardware mappings in the version-3 settings schema, including all pen and pressure fields.
 Display names, physical key order, and learned wheel orientation are UI metadata in `interface.json`.
 Learning changes the picture/labels without changing which hardware event a binding belongs to.
 Startup ignores buffered historical events when identifying controls; only new presses count.
@@ -73,3 +74,20 @@ The official photo is rendered from a bundled resource, with vector overlays for
 pen position, and the draggable tablet rectangle. The app does not contact the image host at runtime.
 Action presets and Qt shortcut recording both produce validated bindings understood by the existing daemon.
 The save path validates a complete profile before updating the driver; it does not omit pen fields.
+
+## Pressure Response and Telemetry
+
+Pressure is mapped as `clamp((raw / 8191 - deadzone) / (full_input - deadzone), 0, 1) ** gamma`,
+then scaled back to the virtual device's 8191-count axis. Zero sensor pressure stays zero.
+The same function drives native output and the response preview. Touch state uses mapped pressure,
+so a deadzone cannot produce contact with zero output pressure.
+
+The daemon retains 600 compact `[sequence, timestamp, raw, mapped]` samples, including short peaks
+that could disappear between UI polls. The GUI keeps a bounded ten-second display history.
+Payload-size tests keep snapshots beneath the IPC message limit. Raw values above the expected range
+remain observable through diagnostic counters even though invalid pen reports are rejected.
+The half-second pen timeout adds a zero-pressure sample and clears stale readout/contact state.
+
+The sensor-time graph shows stored actual response; editing controls changes only the curve preview
+until Save. Neither graph establishes the physical force-to-sensor relationship without an external
+force reference. Defaults remain linear; sensitivity changes are explicit user choices.

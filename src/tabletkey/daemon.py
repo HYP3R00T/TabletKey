@@ -22,7 +22,8 @@ from tabletkey.config import Settings, load_settings, save_settings
 from tabletkey.displays import detect_displays
 from tabletkey.ipc import receive, request, runtime_dir, send, status
 from tabletkey.output import Output
-from tabletkey.pen import PenOutput, decode_pen
+from tabletkey.pen import PenOutput, decode_pen, reported_pressure
+from tabletkey.pressure import SENSOR_MAX, map_pressure
 from tabletkey.protocol import Decoder
 from tabletkey.setup import access_problem
 
@@ -38,6 +39,11 @@ class Daemon:
         self.pen_output: PenOutput | None = None
         self.pen_reports = 0
         self.pen_state: dict | None = None
+        self.pressure_history: deque[list] = deque(maxlen=600)
+        self.pressure_sequence = 0
+        self.last_pen_time = 0.0
+        self.pressure_max_seen = 0
+        self.pressure_out_of_range = 0
         self.grabs: list = []
         self.initialized = False
         self.display_info: list[dict] = []
@@ -66,6 +72,10 @@ class Daemon:
             "pen_active": self.pen_output is not None,
             "pen_reports": self.pen_reports,
             "pen": self.pen_state,
+            "pressure_history": list(self.pressure_history),
+            "pressure_telemetry": True,
+            "pressure_max_seen": self.pressure_max_seen,
+            "pressure_out_of_range": self.pressure_out_of_range,
             "displays": self.display_info,
             "pid": os.getpid(),
             "started_at": self.started_at,
@@ -113,6 +123,8 @@ class Daemon:
         self.grabs.clear()
         self.initialized = False
         self.pen_state = None
+        self.last_pen_time = 0
+        self.add_pressure_sample(0, 0)
         self.decoder.reset()
 
     def scan(self) -> None:
@@ -158,7 +170,9 @@ class Daemon:
         try:
             if settings.pen.enabled:
                 displays = detect_displays()
-                pen = PenOutput(displays, settings.pen.display, settings.pen.area, settings.pen.rotation)
+                pen = PenOutput(
+                    displays, settings.pen.display, settings.pen.area, settings.pen.rotation, settings.pen.pressure
+                )
             return output, pen, displays
         except BaseException:
             output.close()
@@ -224,7 +238,15 @@ class Daemon:
                 LOG.exception("Pending output setup ended during shutdown")
             self.output_future = None
 
+    def add_pressure_sample(self, raw: int, mapped: int) -> None:
+        self.pressure_sequence += 1
+        self.pressure_history.append([self.pressure_sequence, time.time(), raw, mapped])
+
     def poll_input(self) -> None:
+        if self.pen_state is not None and self.last_pen_time and time.monotonic() - self.last_pen_time > 0.5:
+            self.pen_state = {**self.pen_state, "pressure": 0, "mapped_pressure": 0, "in_range": False}
+            self.add_pressure_sample(0, 0)
+            self.last_pen_time = 0
         if self.pen_output is not None:
             try:
                 self.pen_output.expire()
@@ -244,10 +266,24 @@ class Daemon:
                 if not report:
                     break
                 self.reports += 1
+                raw_pressure = reported_pressure(report)
+                if raw_pressure is not None:
+                    self.pressure_max_seen = max(self.pressure_max_seen, raw_pressure)
+                    if raw_pressure > SENSOR_MAX:
+                        self.pressure_out_of_range += 1
                 pen = decode_pen(report)
                 if pen is not None:
                     self.pen_reports += 1
-                    self.pen_state = {"x": pen.x, "y": pen.y, "pressure": pen.pressure}
+                    mapped = map_pressure(pen.pressure, self.settings.pen.pressure)
+                    self.pen_state = {
+                        "x": pen.x,
+                        "y": pen.y,
+                        "pressure": pen.pressure,
+                        "mapped_pressure": mapped,
+                        "in_range": True,
+                    }
+                    self.last_pen_time = time.monotonic()
+                    self.add_pressure_sample(pen.pressure, mapped)
                     if self.pen_output is not None:
                         try:
                             self.pen_output.handle(pen)

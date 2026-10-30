@@ -7,10 +7,11 @@ from typing import Any
 from evdev import AbsInfo, UInput, ecodes
 
 from tabletkey.displays import Display, apply_routes
+from tabletkey.pressure import SENSOR_MAX, PressureSettings, map_pressure
 
 MAX_X = 50800
 MAX_Y = 31750
-MAX_PRESSURE = 8191
+MAX_PRESSURE = SENSOR_MAX
 
 
 @dataclass(frozen=True)
@@ -22,12 +23,18 @@ class PenEvent:
     barrel2: bool
 
 
-def decode_pen(report: bytes) -> PenEvent | None:
+def reported_pressure(report: bytes) -> int | None:
     if len(report) != 13 or (report[0] != 9 or report[1] not in (0x41, 0x42)) or not report[2] & 0x20:
+        return None
+    return int.from_bytes(report[9:11], "little")
+
+
+def decode_pen(report: bytes) -> PenEvent | None:
+    pressure = reported_pressure(report)
+    if pressure is None:
         return None
     x = int.from_bytes(report[3:6], "little")
     y = int.from_bytes(report[6:9], "little")
-    pressure = int.from_bytes(report[9:11], "little")
     if x > MAX_X or y > MAX_Y or pressure > MAX_PRESSURE:
         return None
     return PenEvent(x, y, pressure, bool(report[2] & 2), bool(report[2] & 4))
@@ -61,7 +68,9 @@ def map_point(event: PenEvent, displays: list[Display], area: tuple[float, float
 
 
 class PenOutput:
-    def __init__(self, displays: list[Display], target: str, area: tuple, rotation: int) -> None:
+    def __init__(
+        self, displays: list[Display], target: str, area: tuple, rotation: int, pressure: PressureSettings | None = None
+    ) -> None:
         if target == "all":
             self.displays = list(displays)
         elif target == "auto":
@@ -71,6 +80,7 @@ class PenOutput:
         if not self.displays:
             raise ValueError(f"Selected display {target!r} is not connected")
         self.area, self.rotation = area, rotation
+        self.pressure = pressure or PressureSettings()
         self.devices: dict[str, UInput] = {}
         self.active: UInput | None = None
         self.last_report = 0.0
@@ -105,8 +115,9 @@ class PenOutput:
         device.write(ecodes.EV_KEY, ecodes.BTN_TOOL_PEN, 1)
         device.write(ecodes.EV_ABS, ecodes.ABS_X, x)
         device.write(ecodes.EV_ABS, ecodes.ABS_Y, y)
-        device.write(ecodes.EV_ABS, ecodes.ABS_PRESSURE, event.pressure)
-        device.write(ecodes.EV_KEY, ecodes.BTN_TOUCH, int(event.pressure > 0))
+        pressure = map_pressure(event.pressure, self.pressure)
+        device.write(ecodes.EV_ABS, ecodes.ABS_PRESSURE, pressure)
+        device.write(ecodes.EV_KEY, ecodes.BTN_TOUCH, int(pressure > 0))
         device.write(ecodes.EV_KEY, ecodes.BTN_STYLUS2, int(event.barrel1))
         device.write(ecodes.EV_KEY, ecodes.BTN_STYLUS, int(event.barrel2))
         device.syn()

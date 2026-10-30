@@ -71,7 +71,7 @@ def test_save_preserves_pen_area_rotation_display_and_names(window, monkeypatch)
     window.action_future.result(timeout=2)
     assert len(applied) == 1
     settings = applied[0]
-    assert settings.version == 2
+    assert settings.version == 3
     assert settings.pen.area == (0.1, 0.2, 0.8, 0.9)
     assert settings.pen.rotation == 90 and settings.pen.display == "all"
     assert not settings.pen.enabled
@@ -192,3 +192,51 @@ def test_saved_key_calibration_is_preserved(window):
     window.load()
     assert window.preferences.key_order == custom.key_order
     assert window.tablet.key_order == custom.key_order
+
+
+def test_pressure_graph_calibration_and_profile_save(window, monkeypatch):
+    from tabletkey.pressure import SENSOR_MAX
+
+    applied = []
+    monkeypatch.setattr(cli, "apply_settings", lambda settings: applied.append(settings))
+    panel = window.pressure_panel
+    panel.preset.setCurrentIndex(1)
+    assert panel.settings().full_input == 0.65 and panel.settings().gamma == 0.7
+    now = __import__("time").time()
+    panel.update_stream(
+        (1, 1), [[1, now, 5324, SENSOR_MAX], [2, now, 0, 0]], True, {"pressure": 0, "mapped_pressure": 0}
+    )
+    assert panel.peak_raw == 5324
+    panel.use_peak()
+    assert panel.full_input.value() == 65
+    window.save()
+    assert window.action_future is not None
+    window.action_future.result(timeout=2)
+    assert applied[0].pen.pressure.gamma == 0.7
+    assert applied[0].pen.pressure.full_input == 0.65
+    panel.clear()
+    panel.update_stream(
+        (1, 1),
+        [[1, now, 5324, SENSOR_MAX], [2, now, 0, 0], [3, now, 1000, 2000]],
+        True,
+        {"pressure": 1000, "mapped_pressure": 2000},
+    )
+    assert panel.peak_raw == 1000
+    assert len(panel.history.samples) == 1
+
+
+def test_pressure_range_warning_blocks_peak_calibration(window):
+    panel = window.pressure_panel
+    panel.update_stream((1, 1), [], True, None, 12000, 1)
+    panel.peak_raw = 5000
+    panel.use_peak()
+    assert "range needs verification" in panel.feedback.text()
+    assert "12000" in panel.support.text()
+
+
+def test_pressure_range_warning_is_wired_from_daemon_status(window):
+    packet = status()
+    packet.update(pressure_telemetry=True, pressure_history=[], pressure_max_seen=12000, pressure_out_of_range=1)
+    window.update_status(packet)
+    assert window.pressure_panel.range_warning
+    assert "12000" in window.pressure_panel.support.text()

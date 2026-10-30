@@ -254,7 +254,9 @@ class TabletView(QWidget):
 
     def update_live(self, active: set[str], pen: dict | None = None) -> None:
         self.active = active
-        self.pen = (pen["x"] / MAX_X, pen["y"] / MAX_Y, pen["pressure"] / 8191) if pen else None
+        self.pen = (
+            (pen["x"] / MAX_X, pen["y"] / MAX_Y, pen.get("mapped_pressure", pen["pressure"]) / 8191) if pen else None
+        )
         self.update()
 
     def control_rects(self) -> dict[str, QRectF]:

@@ -10,6 +10,7 @@ from typing import Self
 
 from evdev import ecodes
 
+from tabletkey.pressure import PressureSettings
 from tabletkey.protocol import CONTROLS
 
 ALIASES = {"CTRL": "LEFTCTRL", "ALT": "LEFTALT", "SHIFT": "LEFTSHIFT", "SUPER": "LEFTMETA"}
@@ -46,10 +47,14 @@ class PenSettings:
     display: str = "auto"
     area: tuple[float, float, float, float] = (0.0, 0.0, 1.0, 1.0)
     rotation: int = 0
+    pressure: PressureSettings = field(default_factory=PressureSettings)
 
     @classmethod
     def from_dict(cls, value: object) -> Self:
-        if not isinstance(value, dict) or set(value) != {"enabled", "display", "area", "rotation"}:
+        if not isinstance(value, dict) or set(value) not in (
+            {"enabled", "display", "area", "rotation"},
+            {"enabled", "display", "area", "rotation", "pressure"},
+        ):
             raise ValueError("Pen settings require enabled, display, area, and rotation")
         if type(value["enabled"]) is not bool or not isinstance(value["display"], str) or not value["display"].strip():
             raise ValueError("Invalid pen enable flag or display name")
@@ -67,6 +72,7 @@ class PenSettings:
             value["display"],
             (float(area[0]), float(area[1]), float(area[2]), float(area[3])),
             value["rotation"],
+            PressureSettings.from_dict(value["pressure"]) if "pressure" in value else PressureSettings(),
         )
 
 
@@ -78,7 +84,7 @@ def default_bindings() -> dict[str, str]:
 
 @dataclass
 class Settings:
-    version: int = 2
+    version: int = 3
     output_enabled: bool = True
     bindings: dict[str, str] = field(default_factory=default_bindings)
     pen: PenSettings = field(default_factory=PenSettings)
@@ -88,8 +94,8 @@ class Settings:
         if not isinstance(value, dict):
             raise ValueError("Settings must be an object")
         version = value.get("version")
-        expected = {"version", "output_enabled", "bindings"} | ({"pen"} if version == 2 else set())
-        if type(version) is not int or version not in (1, 2) or set(value) != expected:
+        expected = {"version", "output_enabled", "bindings"} | ({"pen"} if version in (2, 3) else set())
+        if type(version) is not int or version not in (1, 2, 3) or set(value) != expected:
             raise ValueError("Unsupported settings version or fields")
         if type(value["output_enabled"]) is not bool:
             raise ValueError("Invalid output_enabled flag")
@@ -100,7 +106,9 @@ class Settings:
             if not isinstance(binding, str):
                 raise ValueError("Bindings must be strings.")
             parse_binding(binding)
-        pen = PenSettings.from_dict(value["pen"]) if version == 2 else PenSettings()
+        pen = PenSettings.from_dict(value["pen"]) if version in (2, 3) else PenSettings()
+        if version == 3 and "pressure" not in value["pen"]:
+            raise ValueError("Version-3 pen settings require a pressure response")
         return cls(output_enabled=value["output_enabled"], bindings=dict(bindings), pen=pen)
 
     def to_dict(self) -> dict:

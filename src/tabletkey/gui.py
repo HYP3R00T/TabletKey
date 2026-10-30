@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 
 from tabletkey import daemon, ipc
 from tabletkey.config import Settings, load_settings
+from tabletkey.pressure_widgets import PressurePanel
 from tabletkey.protocol import CONTROLS
 from tabletkey.ui_preferences import DEFAULT_KEY_ORDER, UiPreferences
 from tabletkey.widgets import BindingPicker, TabletView, binding_caption
@@ -82,6 +83,9 @@ class Window(QMainWindow):
         self.tabs = QTabWidget()
         self.tabs.addTab(self.controls_page(), "Buttons && wheel")
         self.tabs.addTab(self.pen_page(), "Pen && display")
+        self.pressure_panel = PressurePanel()
+        self.pressure_panel.changed.connect(self.mark_dirty)
+        self.tabs.addTab(self.pressure_panel, "Pressure")
         layout.addWidget(self.tabs, 1)
         bottom = QHBoxLayout()
         self.output_enabled = QCheckBox("Enable tablet output")
@@ -333,6 +337,7 @@ class Window(QMainWindow):
                 picker.set_binding(settings.bindings[control])
             self.output_enabled.setChecked(settings.output_enabled)
             self.pen_enabled.setChecked(settings.pen.enabled)
+            self.pressure_panel.set_settings(settings.pen.pressure)
             if self.display_choice.findData(settings.pen.display) < 0:
                 self.display_choice.addItem(settings.pen.display, settings.pen.display)
             self.display_choice.setCurrentIndex(self.display_choice.findData(settings.pen.display))
@@ -357,13 +362,18 @@ class Window(QMainWindow):
 
     def settings_from_form(self) -> Settings:
         return Settings.from_dict({
-            "version": 2,
+            "version": 3,
             "output_enabled": self.output_enabled.isChecked(),
             "bindings": {control: picker.binding() for control, picker in self.bindings.items()},
             "pen": {
                 "enabled": self.pen_enabled.isChecked(),
                 "display": self.display_choice.currentData(),
                 "rotation": self.rotation_choice.currentData(),
+                "pressure": {
+                    "full_input": self.pressure_panel.settings().full_input,
+                    "gamma": self.pressure_panel.settings().gamma,
+                    "deadzone": self.pressure_panel.settings().deadzone,
+                },
                 "area": [field.value() / 100 for field in self.area_fields],
             },
         })
@@ -445,6 +455,7 @@ class Window(QMainWindow):
         active = self.pressed | {control for control, until in self.flashes.items() if until > time.monotonic()}
         self.tablet.update_live(active, self.last_pen)
         self.area_view.update_live(active, self.last_pen)
+        self.pressure_panel.history.update()
         for control, button in self.control_buttons.items():
             button.setStyleSheet("background: #137e70; color: white;" if control in active else "")
 
@@ -453,6 +464,8 @@ class Window(QMainWindow):
             self.status_label.setText("Driver stopped · start it to use the tablet.")
             self.pressed.clear()
             self.last_pen = None
+            self.pressure_panel.update_stream((None, None), [], True, None)
+            self.pressure_panel.support.setText("Start the driver to see live pressure.")
             return
         state = "Tablet connected" if value.get("connected") else "Waiting for your tablet"
         output = (
@@ -472,8 +485,17 @@ class Window(QMainWindow):
         self.last_pen = value.get("pen")
         if self.last_pen:
             pressure = self.last_pen["pressure"] / 8191 * 100
-            self.pen_status.setText(f"Last pen position shown on the pad · pressure {pressure:.0f}%")
+            mapped = self.last_pen.get("mapped_pressure", self.last_pen["pressure"]) / 8191 * 100
+            self.pen_status.setText(f"Pen position shown · sensor {pressure:.0f}% → mapped {mapped:.0f}%")
         instance = (value["pid"], value["started_at"])
+        self.pressure_panel.update_stream(
+            instance,
+            value.get("pressure_history", []),
+            value.get("pressure_telemetry", False),
+            self.last_pen,
+            value.get("pressure_max_seen", 0),
+            value.get("pressure_out_of_range", 0),
+        )
         events = value.get("events", [])
         if instance != self.instance:
             self.instance = instance
