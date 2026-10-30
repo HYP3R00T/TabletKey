@@ -1,5 +1,5 @@
 {
-	"name": "python-project-template",
+	"name": "TabletKey",
 	"build": {
 		"context": ".",
 		"dockerfile": "Dockerfile"

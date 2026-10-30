@@ -1,4 +1,4 @@
-# Pull Request Template
+# TabletKey Change
 
 ## Description
 
@@ -20,7 +20,7 @@ List key changes introduced in this PR:
 
 Describe how the changes were tested:
 
-- Environment (e.g., Python 3.11, Ubuntu 22.04)
+- Environment (e.g., Python 3.12, Linux distribution, Wayland/X11, OTD running/stopped)
 - Manual tests performed
 - Automated tests added/updated (e.g., `tests/test_feature.py`)
 

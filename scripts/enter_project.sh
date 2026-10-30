@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Keep this script behaviorally aligned with enter_project.ps1.
 cd "${MISE_PROJECT_ROOT:-$(git rev-parse --show-toplevel)}"
 
 # Ensure Commitizen (cz) is available when uv is installed.

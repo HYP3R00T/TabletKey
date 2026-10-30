@@ -1,5 +1,5 @@
 name: 🐛 Bug Report
-description: Report a reproducible issue or unexpected behavior in the project.
+description: Report a reproducible issue or unexpected behavior in TabletKey.
 title: "[Bug]: "
 labels: [bug]
 
@@ -18,8 +18,8 @@ body:
     id: os
     attributes:
       label: Operating System
-      description: Your operating system and version.
-      placeholder: "Windows 11, macOS 14.2, Ubuntu 22.04 LTS"
+      description: Linux distribution, version, and desktop session (Wayland or X11).
+      placeholder: "Fedora 43, KDE Plasma, Wayland"
     validations:
       required: true
 
@@ -27,8 +27,8 @@ body:
     id: installation_method
     attributes:
       label: Installation Method
-      description: How did you install this project? (e.g., `pip install`, `uv sync`, `poetry install`, Docker, manual setup)
-      placeholder: "pip install -e ., uv sync, poetry install, Docker"
+      description: How did you set up TabletKey, and are commands running on the host or in a container?
+      placeholder: "uv sync --locked, Linux host"
     validations:
       required: true
 
@@ -37,7 +37,7 @@ body:
     attributes:
       label: Environment Details (Optional)
       description: Python version, relevant dependencies, or other environment details that might affect the issue.
-      placeholder: "Python 3.13, specific library versions"
+      placeholder: "Python 3.12, VO1060, OpenTabletDriver version and running/stopped status"
     validations:
       required: false
 
@@ -60,7 +60,7 @@ body:
     attributes:
       label: Expected Behavior
       description: What should happen instead? Be clear and concise.
-      placeholder: "The application should display a settings panel without errors."
+      placeholder: "tabletkey doctor should list the attached VO1060 interfaces."
     validations:
       required: false
 
@@ -88,7 +88,7 @@ body:
     attributes:
       label: Workaround (if available)
       description: If you've found a way to work around this issue, please describe it.
-      placeholder: "As a workaround, I can set the timeout environment variable before starting the app."
+      placeholder: "Running on the Linux host instead of in a devcontainer changes the result."
     validations:
       required: false
 

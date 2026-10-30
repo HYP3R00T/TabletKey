@@ -32,3 +32,21 @@ jobs:
         uses: j178/prek-action@v2
         with:
           extra-args: --all-files --skip no-commit-to-branch
+
+  python-tests:
+    name: Python tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.7"
+          enable-cache: true
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Run hardware-independent tests
+        run: uv run pytest
