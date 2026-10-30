@@ -147,3 +147,54 @@ def test_hidraw_eof_is_a_disconnect(monkeypatch):
     monkeypatch.setattr(device.os, "read", lambda *_: b"")
     with pytest.raises(OSError, match="disconnected"):
         device.HidrawHandle(INTERFACE.path).read(1024)
+
+
+def test_standalone_initializes_only_verified_vendor_interface(monkeypatch):
+    handles = []
+    written = []
+
+    class WritableHandle(FakeHandle):
+        def __init__(self, path, writable=False):
+            super().__init__()
+            self.fd = len(handles)
+            self.writable = writable
+            handles.append(self)
+
+    def identity(fd, command, buffer, mutate):
+        import struct
+
+        buffer[:] = struct.pack("IHH", 3, 0x2FEB, 0x000B)
+
+    monkeypatch.setattr(device, "HidrawHandle", WritableHandle)
+    monkeypatch.setattr(device.fcntl, "ioctl", identity)
+    monkeypatch.setattr(device.os, "write", lambda fd, report: written.append((fd, report)) or len(report))
+    opened = device.open_standalone_interfaces([Interface("/dev/a", 0), Interface("/dev/vendor", 2)])
+    assert [item.writable for item in handles] == [False, True]
+    assert written == [
+        (1, bytes.fromhex("09 01 04 00 00 00 00 00 00")),
+        (1, bytes.fromhex("09 02 02 00 00 00 00 00 00")),
+    ]
+    for _, handle in opened:
+        handle.close()
+
+
+def test_standalone_refuses_changed_usb_identity_and_closes_handles(monkeypatch):
+    handles = []
+
+    class WritableHandle(FakeHandle):
+        def __init__(self, path, writable=False):
+            super().__init__()
+            self.fd = 42
+            handles.append(self)
+
+    def wrong_identity(fd, command, buffer, mutate):
+        import struct
+
+        buffer[:] = struct.pack("IHH", 3, 0x1234, 0x000B)
+
+    monkeypatch.setattr(device, "HidrawHandle", WritableHandle)
+    monkeypatch.setattr(device.fcntl, "ioctl", wrong_identity)
+    monkeypatch.setattr(device.os, "write", lambda *_: pytest.fail("must not write to another device"))
+    with pytest.raises(OSError, match="identity changed"):
+        device.open_standalone_interfaces([Interface("/dev/vendor", 2)])
+    assert handles[0].closed

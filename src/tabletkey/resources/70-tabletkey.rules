@@ -1,0 +1,5 @@
+# TabletKey VO1060: grant the active local session access to this tablet only.
+ACTION!="remove", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2feb", ATTRS{idProduct}=="000b", TAG+="uaccess"
+ACTION!="remove", SUBSYSTEM=="input", KERNEL=="event*", ATTRS{idVendor}=="2feb", ATTRS{idProduct}=="000b", TAG+="uaccess"
+# Virtual input output is needed to create TabletKey's pen, keyboard, and wheel.
+ACTION!="remove", SUBSYSTEM=="misc", KERNEL=="uinput", TAG+="uaccess", OPTIONS+="static_node=uinput"

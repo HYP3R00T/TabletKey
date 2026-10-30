@@ -1,1 +1,1 @@
-"""Device-scoped diagnostics for the VEIKK VO1060."""
+"""Standalone Linux driver for the VEIKK VO1060."""

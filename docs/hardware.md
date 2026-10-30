@@ -1,73 +1,59 @@
-# VO1060 hardware investigation
+# VO1060 hardware evidence
 
-## Confirmed starting points
+## Device and Protocol
 
-- This project's target USB identity is `2feb:000b`.
-- Local Linux sysfs lists three HID interfaces for the attached VO1060.
-- Initial local OTD settings contained five auxiliary bindings mapped to `7`; the user subsequently removed those mappings.
-- The upstream [VO1060 configuration](https://github.com/OpenTabletDriver/OpenTabletDriver/blob/0.6.x/OpenTabletDriver.Configurations/Configurations/VEIKK/VO1060.json)
-  declares five auxiliary buttons and uses `VeikkReportParser`, with no wheel specification.
-- The upstream [VEIKK parser](https://github.com/OpenTabletDriver/OpenTabletDriver/blob/0.6.x/OpenTabletDriver.Configurations/Parsers/Veikk/VeikkReportParser.cs)
-  can dispatch some reports to a relative wheel parser. This is a lead, not proof that it decodes this device correctly.
+Target USB identity: `2feb:000b`. Local Linux sysfs exposes three hidraw interfaces.
+Interface 2 has numbered report 9, a 12-byte input payload (13 bytes including ID), and an
+8-byte output payload (9 bytes including ID), verified from the attached device's HID descriptor.
 
-These observations were made on 2026-10-30. Capture evidence must establish the actual format on this device.
-No upstream code has been copied into this project.
+The upstream [VO1060 configuration](https://github.com/OpenTabletDriver/OpenTabletDriver/blob/0.6.x/OpenTabletDriver.Configurations/Configurations/VEIKK/VO1060.json)
+provides initialization payloads `09 01 04` and `09 02 02`, plus coordinate limits 50800×31750
+and pressure maximum 8191. TabletKey pads output reports to the descriptor's nine-byte length.
+The upstream [pen parser](https://github.com/OpenTabletDriver/OpenTabletDriver/blob/0.6.x/OpenTabletDriver.Configurations/Parsers/Veikk/VeikkTabletReport.cs)
+provides field layout evidence. The driver implementation was written independently; these references
+establish protocol facts, not runtime dependencies.
 
-## First acceptance check
+The [official product image](https://veikk.com/products/voila-l) shows four mechanical keys,
+a center button in the dial, and the rotating wheel.
 
-1. Run `uv run tabletkey doctor` on the host. Confirm the target interfaces are accessible.
-2. Record an idle baseline, each button press/release, and each wheel direction into separate labeled files.
-3. Inspect each capture. Confirm the corresponding action produces repeatable changes.
-4. Repeat with OTD running and, if necessary, stopped. Record that condition in the label.
-5. Preserve the raw evidence before writing a decoder. Unknown reports must remain observable.
+## Captured Controls
 
-Capture files use JSON Lines: a versioned session header, timestamped raw reports with
-interface paths, optional errors, and a final status. An absent end marker means the capture
-is incomplete. Reports carry monotonic elapsed seconds; the header carries UTC wall time.
-`inspect` shows varying byte offsets and common report patterns; it does not infer button identities.
+The user recorded `otd-unmapped-retry.jsonl` after removing OTD's auxiliary mappings:
 
-## Local verification
+- 38 thirteen-byte reports, all from interface 2, with a complete session end marker.
+- Five button press/release pairs, identifiers `08`, `04`, `02`, `01`, `10` in press order.
+- Button prefix `09 42 01`; byte 3 alternates `01`/`00` for press/release.
+- Wheel prefix `09 42 03`; byte 4 contains `02` or `01`, with active/release pulse pairs.
+- Associating `10` with the center button remains an inference from the user's sequence.
+- Physical wheel polarity has not been isolated; UI mappings can be swapped.
 
-A two-second read-only baseline on 2026-10-30 successfully opened all three host hidraw
-interfaces while the existing OTD setup remained unchanged. It received zero reports.
-This verifies access and cleanup only; no physical control was deliberately exercised,
-and simultaneous event delivery has not been established. The local capture is ignored.
+Raw captures remain local under ignored `captures/` and are not committed.
 
-The initially evaluated HIDAPI wheel selected a libusb backend on this machine. TabletKey
-instead opens Linux hidraw nodes directly with `O_RDONLY | O_NONBLOCK`, avoiding USB
-interface claims and any backend driver-detachment behavior. No external runtime dependency
-is needed for this Linux diagnostic slice.
+## Standalone Verification — 2026-10-30
 
-## Control capture evidence
+The first standalone attempt found permission denied on the target native input nodes.
+OTD was restored after cleanup. The user then ran TabletKey's explicit udev setup command.
+The subsequent test established:
 
-The user recorded `otd-unmapped-retry.jsonl` after removing the OTD auxiliary mappings.
-It contains 38 thirteen-byte reports from interface 2 and a complete end marker.
-The raw file remains local under ignored `captures/`.
+- OTD was stopped; executable inspection confirmed it was not running.
+- TabletKey's initialization writes succeeded on interface 2.
+- All three hidraw interfaces opened, and three native VO1060 evdev nodes were grabbed.
+- Virtual keyboard, mouse, and pressure-sensitive pen devices were created.
+- COSMIC routing selected the enabled primary output HDMI-A-1 at logical 1920×1080, offset 1920,0.
+- The user's existing native-device and OTD COSMIC routing entries were preserved.
 
-- Five button press/release pairs appeared, with identifiers `08`, `04`, `02`, `01`, `10` in press order.
-- Reports beginning `09 42 01` represented button activity; byte 3 alternated between `01` and `00`.
-- Wheel activity appeared as `09 42 03` reports with byte 4 values `02` and `01`.
-  The values interleave in the mixed capture, so clockwise/counterclockwise assignment is not established.
-- The [official product page and image](https://veikk.com/products/voila-l) show four mechanical keys
-  plus a center button within the rotating dial. This agrees with five distinct captured button identifiers.
-- Associating `10` with the center button is still an inference from the user's sequence, not an isolated test.
+TabletKey was then started as the real detached daemon with OTD stopped. The user was asked to
+unplug/replug the tablet and test pen and wheel; the user reported **pen and scrolling work**.
+Afterward, daemon status showed initialized/connected/pen-active, 2729 decoded pen reports out of
+2794 total reports, and no device or output error. OTD remained stopped.
+This establishes operation after a fresh connection without a running OTD daemon.
 
-Receiving these reports establishes raw control input, not system-wide output, pen coexistence under load,
-or reconnect behavior. The remaining work below is still proposed.
+## Remaining Validation
 
-## Proposed next slices
+Pressure decoding/output is implemented, but brush-width response in a pressure-aware drawing app
+has not been specifically confirmed. Multi-monitor crossing, crop/rotation ergonomics, sustained
+stationary contact, simultaneous controls, repeat behavior, and reboot/startup need further tests.
+Tilt and per-app profiles are not implemented. No OTD uninstall or permanent service disable has occurred.
 
-These are planned, not implemented or verified:
-
-1. Decode verified button states and wheel deltas; test against reviewed captures.
-2. Prove Linux uinput scrolling and key output alongside OTD, without duplicate events or lost pen pressure.
-3. Add a PySide6 interface with live control highlighting and editable saved mappings.
-4. Add reconnection, login startup, and unplug/replug/reboot tests.
-
-Python remains the implementation language. OTD can continue handling the pen if coexistence
-works. If sharing the HID interfaces loses reports, choose a single hardware reader with an
-explicit event bridge, or reconsider ownership before adding more functionality.
-
-If USB captures do not explain initialization or wheel mode, inspect the official Windows
-package with [REA](https://github.com/morluto/rea) or capture its USB traffic. The installer EXE
-may merely unpack the DLL or service that actually communicates with the tablet.
+Raw diagnostics remain read-only. Standalone daemon startup is the explicit device-initializing,
+native-input-grabbing path; do not confuse the guarantees of those two modes.

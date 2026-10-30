@@ -46,7 +46,9 @@ jobs:
         with:
           version: "0.12.7"
           enable-cache: true
+      - name: Install Python with build headers
+        run: uv python install
       - name: Install locked dependencies
-        run: uv sync --locked
+        run: uv sync --locked --managed-python
       - name: Run hardware-independent tests
         run: uv run pytest

@@ -9,6 +9,7 @@ copyright = "Copyright &copy; 2026 Rajesh Das"
 nav = [
   { Home = "index.md" },
   { "Hardware Investigation" = "hardware.md" },
+  { Architecture = "architecture.md" },
 ]
 
 [project.theme]
