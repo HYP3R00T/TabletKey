@@ -33,7 +33,7 @@ tabletkey = "tabletkey.cli:main"
 [dependency-groups]
 dev = [
   "pytest>=8,<10",
-  "ruff>=0.16,<0.17",
+  "ruff>=0.16,<0.18",
   "ty>=0.0.75,<0.1",
 ]
 
